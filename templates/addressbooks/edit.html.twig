@@ -5,8 +5,8 @@
 
 {% include '_partials/back_button.html.twig' with { url: path('addressbook_index', {username: username}), text: "addressbooks.back"|trans({'user': principal.displayName }) } %}
 
-{% if addressbook.id %}
-<h1 class="display-4 fw-lighter mb-5">{{ "addressbooks.edit"|trans({'name': addressbook.displayName }) }}</h1>
+{% if addressbook_instance.id %}
+<h1 class="display-4 fw-lighter mb-5">{{ "addressbooks.edit"|trans({'name': addressbook_instance.displayName }) }} {% if is_shared %}<span class="badge bg-info">Shared</span>{% endif %}</h1>
 {% else %}
 <h1 class="display-4 fw-lighter mb-5">{{ "addressbooks.new"|trans }} <small class="text-muted">for {{ principal.displayName }}</small></h1>
 {% endif %}

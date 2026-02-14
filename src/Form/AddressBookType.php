@@ -2,10 +2,9 @@
 
 namespace App\Form;
 
-use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -17,42 +16,41 @@ class AddressBookType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('principalUri', HiddenType::class, [
-                'required' => true,
-            ])
             ->add('uri', TextType::class, [
                 'label' => 'form.uri',
                 'disabled' => !$options['new'],
                 'help' => 'form.uri.help.carddav',
+                'required' => false, // Will be auto-generated if not provided
             ])
             ->add('displayName', TextType::class, [
                 'label' => 'form.displayName',
                 'help' => 'form.name.help.carddav',
             ])
-            ->add('includedInBirthdayCalendar', ChoiceType::class, [
+            ->add('description', TextareaType::class, [
+                'label' => 'form.description',
+                'required' => false,
+            ]);
+
+        if ($options['birthday_calendar_enabled']) {
+            $builder->add('includedInBirthdayCalendar', ChoiceType::class, [
                 'label' => 'form.includedInBirthdayCalendar',
                 'help' => 'form.includedInBirthdayCalendar.help',
                 'required' => true,
                 'choices' => ['yes' => true, 'no' => false],
-            ])
-            ->add('description', TextareaType::class, [
-                'label' => 'form.description',
-                'required' => false,
-            ])
-            ->add('save', SubmitType::class, [
-                'label' => 'save',
+                'mapped' => false, // This field is handled specially in the controller
             ]);
-
-        if (!$options['birthday_calendar_enabled']) {
-            $builder->remove('includedInBirthdayCalendar');
         }
+
+        $builder->add('save', SubmitType::class, [
+            'label' => 'save',
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'new' => false,
-            'data_class' => AddressBook::class,
+            'data_class' => AddressBookInstance::class,
             'birthday_calendar_enabled' => true,
         ]);
     }

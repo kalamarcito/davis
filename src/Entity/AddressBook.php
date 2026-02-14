@@ -5,12 +5,9 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity()]
 #[ORM\Table(name: 'addressbooks')]
-#[UniqueEntity(fields: ['principalUri', 'uri'], errorPath: 'uri', message: 'form.uri.unique')]
 class AddressBook
 {
     #[ORM\Id]
@@ -18,24 +15,14 @@ class AddressBook
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\Column(name: 'principaluri', type: 'string', length: 255)]
-    private $principalUri;
-
-    #[ORM\Column(name: 'displayname', type: 'string', length: 255)]
-    private $displayName;
-
-    #[ORM\Column(type: 'string', length: 255)]
-    #[Assert\Regex("/[0-9a-z\-]+/")]
-    private $uri;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private $description;
-
     #[ORM\Column(type: 'string', length: 255)]
     private $synctoken;
 
     #[ORM\Column(type: 'boolean', nullable: true, options: ['default' => false])]
     private $includedInBirthdayCalendar;
+
+    #[ORM\OneToMany(targetEntity: "App\Entity\AddressBookInstance", mappedBy: 'addressBook')]
+    private $instances;
 
     #[ORM\OneToMany(targetEntity: "App\Entity\Card", mappedBy: 'addressBook')]
     private $cards;
@@ -47,6 +34,7 @@ class AddressBook
     {
         $this->synctoken = 1;
         $this->includedInBirthdayCalendar = false;
+        $this->instances = new ArrayCollection();
         $this->cards = new ArrayCollection();
         $this->changes = new ArrayCollection();
     }
@@ -54,30 +42,6 @@ class AddressBook
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getPrincipalUri(): ?string
-    {
-        return $this->principalUri;
-    }
-
-    public function setPrincipalUri(string $principalUri): self
-    {
-        $this->principalUri = $principalUri;
-
-        return $this;
-    }
-
-    public function getDisplayName(): ?string
-    {
-        return $this->displayName;
-    }
-
-    public function setDisplayName(string $displayName): self
-    {
-        $this->displayName = $displayName;
-
-        return $this;
     }
 
     public function isIncludedInBirthdayCalendar(): ?bool
@@ -92,30 +56,6 @@ class AddressBook
         return $this;
     }
 
-    public function getUri(): ?string
-    {
-        return $this->uri;
-    }
-
-    public function setUri(string $uri): self
-    {
-        $this->uri = $uri;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(string $description): self
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
     public function getSynctoken(): ?string
     {
         return $this->synctoken;
@@ -124,6 +64,37 @@ class AddressBook
     public function setSynctoken(string $synctoken): self
     {
         $this->synctoken = $synctoken;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|AddressBookInstance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function addInstance(AddressBookInstance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->setAddressBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(AddressBookInstance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            // set the owning side to null (unless already changed)
+            if ($instance->getAddressBook() === $this) {
+                $instance->setAddressBook(null);
+            }
+        }
 
         return $this;
     }

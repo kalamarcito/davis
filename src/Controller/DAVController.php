@@ -277,7 +277,12 @@ class DAVController extends AbstractController
 
         // CardDAV plugins
         if ($this->cardDAVEnabled) {
+            // Add DAV\Sharing\Plugin if not already added by CalDAV
+            if (is_null($this->server->getPlugin('sharing'))) {
+                $this->server->addPlugin(new \Sabre\DAV\Sharing\Plugin());
+            }
             $this->server->addPlugin(new \Sabre\CardDAV\Plugin());
+            $this->server->addPlugin(new \Sabre\CardDAV\SharingPlugin());
             $this->server->addPlugin(new \Sabre\CardDAV\VCFExportPlugin());
         }
 

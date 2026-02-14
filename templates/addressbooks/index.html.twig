@@ -8,27 +8,35 @@
 <h1 class="display-4 d-flex fw-lighter justify-content-between">{{ "addressbooks.for"|trans({'who': principal.displayName}) }} <a href="{{ path('addressbook_create', {username: username}) }}" class="btn btn-sm btn-success mb-auto mt-auto">+ {{ "addressbooks.new"|trans }}</a></h1>
 
 <div class="list-group mt-4">
-{% for addressbook in addressbooks %}
+{% for addressbook_instance in addressbook_instances %}
     <div class="list-group-item p-3">
         <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1 me-auto">{{ addressbook.displayName }}</h5>
+            <h5 class="mb-1 me-auto">{{ addressbook_instance.displayName }} {% if addressbook_instance.isShared() %}<span class="badge bg-info">Shared</span>{% endif %}</h5>
             <div class="me-0 text-right d-md-block d-none">
-                <a href="{{ path('addressbook_edit',{username: username, id: addressbook.id})}}" class="btn btn-sm btn-outline-primary ms-1">✎ {{ "edit"|trans }}</a>
+                <a href="{{ path('addressbook_edit',{username: username, id: addressbook_instance.id})}}" class="btn btn-sm btn-outline-primary ms-1">✎ {{ "edit"|trans }}</a>
                 <a href="#"
                     data-bs-toggle="modal" data-bs-target="#deleteModal-addressbooks"
-                    data-href="{{ path('addressbook_delete',{username: username, id: addressbook.id})}}"
+                    data-href="{{ path('addressbook_delete',{username: username, id: addressbook_instance.id})}}"
                     class="btn btn-sm btn-outline-danger ms-1" 
                     data-flavour="addressbooks"
                 >⚠ {{ "delete"|trans }}</a>
             </div>
         </div>
-        <p class="mb-1">{{ addressbook.description }}</p>
-        <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook.cards|length}) }}</small>
+        <p class="mb-1">{{ addressbook_instance.description }}</p>
+        <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook_instance.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook_instance.addressBook.cards|length}) }}
+        {% if addressbook_instance.isShared() %}
+            <br>Access Level: 
+            {% if addressbook_instance.access == 2 %}
+                <span class="badge bg-secondary">Read Only</span>
+            {% elseif addressbook_instance.access == 3 %}
+                <span class="badge bg-primary">Read/Write</span>
+            {% endif %}
+        {% endif %}</small>
         <div class="btn-group btn-group-sm mt-3 d-flex d-md-none" role="group">
-            <a href="{{ path('addressbook_edit',{username: username, id: addressbook.id})}}" class="btn btn-sm btn-outline-primary">✎ {{ "edit"|trans }}</a>
+            <a href="{{ path('addressbook_edit',{username: username, id: addressbook_instance.id})}}" class="btn btn-sm btn-outline-primary">✎ {{ "edit"|trans }}</a>
             <a href="#"
                 data-bs-toggle="modal" data-bs-target="#deleteModal-addressbooks"
-                data-href="{{ path('addressbook_delete',{username: username, id: addressbook.id})}}" 
+                data-href="{{ path('addressbook_delete',{username: username, id: addressbook_instance.id})}}" 
                 class="btn btn-sm btn-outline-danger"
                 data-flavour="addressbooks"
             >⚠ {{ "delete"|trans }}</a>

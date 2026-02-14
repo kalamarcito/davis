@@ -14,7 +14,7 @@
         "doctrine/doctrine-bundle": "^2.15.1",
         "doctrine/doctrine-migrations-bundle": "^3.4.2",
         "doctrine/orm": "^2.20.6",
-        "sabre/dav": "^4.7.0",
+        "sabre/dav": "@dev",
         "symfony/apache-pack": "^1.0.1",
         "symfony/asset": "^7.3",
         "symfony/console": "^7.3",
@@ -53,6 +53,15 @@
         "symfony/stopwatch": "^7.3",
         "symfony/web-profiler-bundle": "^7.3"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/home/sam/sabre-dav",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "config": {
         "preferred-install": {
             "*": "dist"

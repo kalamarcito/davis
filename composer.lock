@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "10757dc8d60ac836ef824e271e598ca8",
+    "content-hash": "28c9c3d35ad9ee02bf8417797b6bebd3",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -2477,17 +2477,11 @@
         },
         {
             "name": "sabre/dav",
-            "version": "4.7.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sabre-io/dav.git",
-                "reference": "074373bcd689a30bcf5aaa6bbb20a3395964ce7a"
-            },
+            "version": "dev-master",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/dav/zipball/074373bcd689a30bcf5aaa6bbb20a3395964ce7a",
-                "reference": "074373bcd689a30bcf5aaa6bbb20a3395964ce7a",
-                "shasum": ""
+                "type": "path",
+                "url": "/home/sam/sabre-dav",
+                "reference": "d28f2ddf9aacc45364e09e1000498206277c724f"
             },
             "require": {
                 "ext-ctype": "*",
@@ -2500,20 +2494,19 @@
                 "ext-simplexml": "*",
                 "ext-spl": "*",
                 "lib-libxml": ">=2.7.0",
-                "php": "^7.1.0 || ^8.0",
+                "php": "^7.4.0 || ^8.0",
                 "psr/log": "^1.0 || ^2.0 || ^3.0",
-                "sabre/event": "^5.0",
-                "sabre/http": "^5.0.5",
-                "sabre/uri": "^2.0",
-                "sabre/vobject": "^4.2.1",
-                "sabre/xml": "^2.0.1"
+                "sabre/event": "^6.0",
+                "sabre/http": "^7.0",
+                "sabre/vobject": "^4.5"
             },
             "require-dev": {
+                "ext-sqlite3": "*",
                 "friendsofphp/php-cs-fixer": "^2.19",
-                "monolog/monolog": "^1.27 || ^2.0",
-                "phpstan/phpstan": "^0.12 || ^1.0",
-                "phpstan/phpstan-phpunit": "^1.0",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6"
+                "monolog/monolog": "^2.9",
+                "phpstan/phpstan": "^1.11",
+                "phpstan/phpstan-phpunit": "^1.4",
+                "phpunit/phpunit": "^9.6"
             },
             "suggest": {
                 "ext-curl": "*",
@@ -2530,7 +2523,27 @@
                     "Sabre\\": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Sabre\\": "tests/Sabre/"
+                }
+            },
+            "scripts": {
+                "phpstan": [
+                    "phpstan analyse lib tests"
+                ],
+                "cs-fixer": [
+                    "php-cs-fixer fix"
+                ],
+                "phpunit": [
+                    "phpunit --configuration tests/phpunit.xml tests"
+                ],
+                "test": [
+                    "composer phpstan",
+                    "composer cs-fixer",
+                    "composer phpunit"
+                ]
+            },
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2538,47 +2551,52 @@
                 {
                     "name": "Evert Pot",
                     "email": "me@evertpot.com",
-                    "homepage": "http://evertpot.com/",
+                    "homepage": "https://evertpot.com/",
                     "role": "Developer"
                 }
             ],
             "description": "WebDAV Framework for PHP",
-            "homepage": "http://sabre.io/",
+            "homepage": "https://sabre.io/",
             "keywords": [
                 "CalDAV",
                 "CardDAV",
+                "Framework",
                 "WebDAV",
-                "framework",
                 "iCalendar"
             ],
             "support": {
                 "forum": "https://groups.google.com/group/sabredav-discuss",
-                "issues": "https://github.com/sabre-io/dav/issues",
                 "source": "https://github.com/fruux/sabre-dav"
             },
-            "time": "2024-10-29T11:46:02+00:00"
+            "transport-options": {
+                "symlink": true,
+                "relative": false
+            }
         },
         {
             "name": "sabre/event",
-            "version": "5.1.7",
+            "version": "6.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/event.git",
-                "reference": "86d57e305c272898ba3c28e9bd3d65d5464587c2"
+                "reference": "70525d519b6fbd8e2cbef4e0dbe69c9d4a3e2db7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/event/zipball/86d57e305c272898ba3c28e9bd3d65d5464587c2",
-                "reference": "86d57e305c272898ba3c28e9bd3d65d5464587c2",
+                "url": "https://api.github.com/repos/sabre-io/event/zipball/70525d519b6fbd8e2cbef4e0dbe69c9d4a3e2db7",
+                "reference": "70525d519b6fbd8e2cbef4e0dbe69c9d4a3e2db7",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1 || ^8.0"
+                "php": "^7.4 || ^8.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "~2.17.1||^3.63",
-                "phpstan/phpstan": "^0.12",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6"
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan": "^1.12",
+                "phpstan/phpstan-phpunit": "^1.4",
+                "phpstan/phpstan-strict-rules": "^1.6",
+                "phpunit/phpunit": "^9.6"
             },
             "type": "library",
             "autoload": {
@@ -2622,34 +2640,37 @@
                 "issues": "https://github.com/sabre-io/event/issues",
                 "source": "https://github.com/fruux/sabre-event"
             },
-            "time": "2024-08-27T11:23:05+00:00"
+            "time": "2024-09-06T10:14:28+00:00"
         },
         {
             "name": "sabre/http",
-            "version": "5.1.13",
+            "version": "7.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/http.git",
-                "reference": "7c2a14097d1a0de2347dcbdc91a02f38e338f4db"
+                "reference": "925aa1203680e0e5e63d05dd14d65169eb7ba02f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/http/zipball/7c2a14097d1a0de2347dcbdc91a02f38e338f4db",
-                "reference": "7c2a14097d1a0de2347dcbdc91a02f38e338f4db",
+                "url": "https://api.github.com/repos/sabre-io/http/zipball/925aa1203680e0e5e63d05dd14d65169eb7ba02f",
+                "reference": "925aa1203680e0e5e63d05dd14d65169eb7ba02f",
                 "shasum": ""
             },
             "require": {
                 "ext-ctype": "*",
                 "ext-curl": "*",
                 "ext-mbstring": "*",
-                "php": "^7.1 || ^8.0",
-                "sabre/event": ">=4.0 <6.0",
-                "sabre/uri": "^2.0"
+                "php": "^7.4 || ^8.0",
+                "sabre/event": "^6.0",
+                "sabre/uri": "^2.3 || ^3.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "~2.17.1||3.63.2",
-                "phpstan/phpstan": "^0.12",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6"
+                "friendsofphp/php-cs-fixer": "^3.87",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan": "^1.12",
+                "phpstan/phpstan-phpunit": "^1.4",
+                "phpstan/phpstan-strict-rules": "^1.6",
+                "phpunit/phpunit": "^9.6"
             },
             "suggest": {
                 "ext-curl": " to make http requests with the Client class"
@@ -2685,27 +2706,27 @@
                 "issues": "https://github.com/sabre-io/http/issues",
                 "source": "https://github.com/fruux/sabre-http"
             },
-            "time": "2025-09-09T10:21:47+00:00"
+            "time": "2025-09-09T10:39:07+00:00"
         },
         {
             "name": "sabre/uri",
-            "version": "2.3.4",
+            "version": "3.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/uri.git",
-                "reference": "b76524c22de90d80ca73143680a8e77b1266c291"
+                "reference": "38eeab6ed9eec435a2188db489d4649c56272c51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/uri/zipball/b76524c22de90d80ca73143680a8e77b1266c291",
-                "reference": "b76524c22de90d80ca73143680a8e77b1266c291",
+                "url": "https://api.github.com/repos/sabre-io/uri/zipball/38eeab6ed9eec435a2188db489d4649c56272c51",
+                "reference": "38eeab6ed9eec435a2188db489d4649c56272c51",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.4 || ^8.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.63",
+                "friendsofphp/php-cs-fixer": "^3.64",
                 "phpstan/extension-installer": "^1.4",
                 "phpstan/phpstan": "^1.12",
                 "phpstan/phpstan-phpunit": "^1.4",
@@ -2745,20 +2766,20 @@
                 "issues": "https://github.com/sabre-io/uri/issues",
                 "source": "https://github.com/fruux/sabre-uri"
             },
-            "time": "2024-08-27T12:18:16+00:00"
+            "time": "2024-09-04T15:30:08+00:00"
         },
         {
             "name": "sabre/vobject",
-            "version": "4.5.7",
+            "version": "4.5.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/vobject.git",
-                "reference": "ff22611a53782e90c97be0d0bc4a5f98a5c0a12c"
+                "reference": "d554eb24d64232922e1eab5896cc2f84b3b9ffb1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/vobject/zipball/ff22611a53782e90c97be0d0bc4a5f98a5c0a12c",
-                "reference": "ff22611a53782e90c97be0d0bc4a5f98a5c0a12c",
+                "url": "https://api.github.com/repos/sabre-io/vobject/zipball/d554eb24d64232922e1eab5896cc2f84b3b9ffb1",
+                "reference": "d554eb24d64232922e1eab5896cc2f84b3b9ffb1",
                 "shasum": ""
             },
             "require": {
@@ -2849,20 +2870,20 @@
                 "issues": "https://github.com/sabre-io/vobject/issues",
                 "source": "https://github.com/fruux/sabre-vobject"
             },
-            "time": "2025-04-17T09:22:48+00:00"
+            "time": "2026-01-12T10:45:19+00:00"
         },
         {
             "name": "sabre/xml",
-            "version": "2.2.11",
+            "version": "4.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/xml.git",
-                "reference": "01a7927842abf3e10df3d9c2d9b0cc9d813a3fcc"
+                "reference": "a89257fd188ce30e456b841b6915f27905dfdbe3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/xml/zipball/01a7927842abf3e10df3d9c2d9b0cc9d813a3fcc",
-                "reference": "01a7927842abf3e10df3d9c2d9b0cc9d813a3fcc",
+                "url": "https://api.github.com/repos/sabre-io/xml/zipball/a89257fd188ce30e456b841b6915f27905dfdbe3",
+                "reference": "a89257fd188ce30e456b841b6915f27905dfdbe3",
                 "shasum": ""
             },
             "require": {
@@ -2870,13 +2891,13 @@
                 "ext-xmlreader": "*",
                 "ext-xmlwriter": "*",
                 "lib-libxml": ">=2.6.20",
-                "php": "^7.1 || ^8.0",
-                "sabre/uri": ">=1.0,<3.0.0"
+                "php": "^7.4 || ^8.0",
+                "sabre/uri": ">=2.0,<4.0.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "~2.17.1||3.63.2",
-                "phpstan/phpstan": "^0.12",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6"
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "phpstan/phpstan": "^1.12",
+                "phpunit/phpunit": "^9.6"
             },
             "type": "library",
             "autoload": {
@@ -2918,7 +2939,7 @@
                 "issues": "https://github.com/sabre-io/xml/issues",
                 "source": "https://github.com/fruux/sabre-xml"
             },
-            "time": "2024-09-06T07:37:46+00:00"
+            "time": "2024-09-06T08:00:55+00:00"
         },
         {
             "name": "symfony/apache-pack",
@@ -12294,7 +12315,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "sabre/dav": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -12309,5 +12332,5 @@
     "platform-overrides": {
         "php": "8.2.15"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
