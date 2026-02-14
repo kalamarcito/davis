@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\Calendar;
 use App\Entity\CalendarInstance;
 use App\Entity\CalendarSubscription;
@@ -96,12 +97,16 @@ class UserController extends AbstractController
                 $entityManager->persist($principalProxyWrite);
 
                 $addressbook = new AddressBook();
-                $addressbook->setPrincipalUri(Principal::PREFIX.$user->getUsername())
-                         ->setUri('default') // No risk of collision since unicity is guaranteed by the new user principal
+                $entityManager->persist($addressbook);
+
+                $addressbookInstance = new AddressBookInstance();
+                $addressbookInstance->setAddressBook($addressbook)
+                         ->setPrincipalUri(Principal::PREFIX.$user->getUsername())
+                         ->setUri('default')
                          ->setDisplayName($trans->trans('default.addressbook.title'))
                          ->setDescription($trans->trans('default.addressbook.description', ['user' => $displayName]));
                 $entityManager->persist($calendarInstance);
-                $entityManager->persist($addressbook);
+                $entityManager->persist($addressbookInstance);
                 $entityManager->persist($principal);
             }
 
@@ -172,14 +177,16 @@ class UserController extends AbstractController
             $entityManager->remove($object);
         }
 
-        $addressbooks = $doctrine->getRepository(AddressBook::class)->findByPrincipalUri(Principal::PREFIX.$username);
-        foreach ($addressbooks ?? [] as $addressbook) {
+        $addressbookInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri(Principal::PREFIX.$username);
+        foreach ($addressbookInstances ?? [] as $instance) {
+            $addressbook = $instance->getAddressBook();
             foreach ($addressbook->getCards() ?? [] as $card) {
                 $entityManager->remove($card);
             }
             foreach ($addressbook->getChanges() ?? [] as $change) {
                 $entityManager->remove($change);
             }
+            $entityManager->remove($instance);
             $entityManager->remove($addressbook);
         }
 
