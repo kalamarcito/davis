@@ -55,11 +55,8 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "/home/sam/sabre-dav",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/kalamarcito/dav"
         }
     ],
     "config": {
