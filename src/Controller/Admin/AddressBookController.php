@@ -11,8 +11,10 @@ use Doctrine\Persistence\ManagerRegistry;
 use Sabre\DAV\Sharing\Plugin as SharingPlugin;
 use Sabre\DAV\UUIDUtil;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -25,10 +27,13 @@ class AddressBookController extends AbstractController
         $principal = $doctrine->getRepository(Principal::class)->findOneByUri(Principal::PREFIX.$username);
         $addressbookInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri(Principal::PREFIX.$username);
 
+        $allPrincipals = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal(Principal::PREFIX.$username);
+
         return $this->render('addressbooks/index.html.twig', [
             'addressbook_instances' => $addressbookInstances,
             'principal' => $principal,
             'username' => $username,
+            'allPrincipals' => $allPrincipals,
         ]);
     }
 
@@ -142,6 +147,94 @@ class AddressBookController extends AbstractController
             // Let's sync the user birthday calendar if needed
             $birthdayService->syncUser($username);
         }
+
+        return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+    }
+
+    #[Route('/{username}/shares/{addressbookid}', name: 'shares', requirements: ['addressbookid' => "\d+"])]
+    public function addressBookShares(ManagerRegistry $doctrine, string $username, string $addressbookid, TranslatorInterface $trans): Response
+    {
+        $instances = $doctrine->getRepository(AddressBookInstance::class)->findBy(['addressBook' => $addressbookid]);
+
+        $response = [];
+        foreach ($instances as $instance) {
+            // Skip owner instances
+            if (in_array($instance->getAccess(), AddressBookInstance::getOwnerAccesses())) {
+                continue;
+            }
+            $principal = $doctrine->getRepository(Principal::class)->findOneByUri($instance->getPrincipalUri());
+            $response[] = [
+                'principalUri' => $instance->getPrincipalUri(),
+                'displayName' => $principal ? $principal->getDisplayName() : $instance->getPrincipalUri(),
+                'email' => $principal ? $principal->getEmail() : '',
+                'accessText' => $trans->trans('addressbook.share_access.'.$instance->getAccess()),
+                'isWriteAccess' => SharingPlugin::ACCESS_READWRITE === $instance->getAccess(),
+                'revokeUrl' => $this->generateUrl('addressbook_revoke', ['username' => $username, 'id' => $instance->getId()]),
+            ];
+        }
+
+        return new JsonResponse($response);
+    }
+
+    #[Route('/{username}/share/{instanceid}', name: 'share_add', requirements: ['instanceid' => "\d+"])]
+    public function addressBookShareAdd(ManagerRegistry $doctrine, Request $request, string $username, string $instanceid, TranslatorInterface $trans): Response
+    {
+        $instance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($instanceid);
+        if (!$instance) {
+            throw $this->createNotFoundException('Address Book not found');
+        }
+
+        if (!is_numeric($request->get('principalId'))) {
+            throw new BadRequestHttpException();
+        }
+
+        $newShareeToAdd = $doctrine->getRepository(Principal::class)->findOneById($request->get('principalId'));
+        if (!$newShareeToAdd) {
+            throw $this->createNotFoundException('Member not found');
+        }
+
+        $existingSharedInstance = $doctrine->getRepository(AddressBookInstance::class)->findOneBy([
+            'addressBook' => $instance->getAddressBook(),
+            'principalUri' => $newShareeToAdd->getUri(),
+        ]);
+
+        $writeAccess = ('true' === $request->get('write') ? SharingPlugin::ACCESS_READWRITE : SharingPlugin::ACCESS_READ);
+
+        $entityManager = $doctrine->getManager();
+
+        if ($existingSharedInstance) {
+            $existingSharedInstance->setAccess($writeAccess);
+        } else {
+            $sharedInstance = new AddressBookInstance();
+            $sharedInstance->setAddressBook($instance->getAddressBook())
+                     ->setShareHref('mailto:'.$newShareeToAdd->getEmail())
+                     ->setDescription($instance->getDescription())
+                     ->setDisplayName($instance->getDisplayName())
+                     ->setUri(UUIDUtil::getUUID())
+                     ->setPrincipalUri($newShareeToAdd->getUri())
+                     ->setAccess($writeAccess);
+            $entityManager->persist($sharedInstance);
+        }
+
+        $entityManager->flush();
+        $this->addFlash('success', $trans->trans('addressbook.shared'));
+
+        return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+    }
+
+    #[Route('/{username}/revoke/{id}', name: 'revoke', requirements: ['id' => "\d+"])]
+    public function addressBookRevoke(ManagerRegistry $doctrine, string $username, string $id, TranslatorInterface $trans): Response
+    {
+        $instance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($id);
+        if (!$instance) {
+            throw $this->createNotFoundException('Address Book not found');
+        }
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->remove($instance);
+        $entityManager->flush();
+
+        $this->addFlash('success', $trans->trans('addressbook.revoked'));
 
         return $this->redirectToRoute('addressbook_index', ['username' => $username]);
     }
