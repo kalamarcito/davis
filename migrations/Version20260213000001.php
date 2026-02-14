@@ -46,19 +46,21 @@ final class Version20260213000001 extends AbstractMigration
         // Add foreign key constraint
         $this->addSql('ALTER TABLE addressbookinstances ADD CONSTRAINT FK_addressbookinstances_addressbookid FOREIGN KEY (addressbookid) REFERENCES addressbooks (id)');
 
-        // Migrate data from addressbooks to addressbookinstances
-        // Create one instance per existing addressbook with access=1 (owner)
+        // Migrate existing data from addressbooks to addressbookinstances (if any rows exist)
         $this->addSql('INSERT INTO addressbookinstances (addressbookid, principaluri, access, displayname, uri, description, share_invitestatus) 
                       SELECT id, principaluri, 1, displayname, uri, description, 2 FROM addressbooks');
 
-        // Remove migrated columns from addressbooks table
-        $this->addSql('ALTER TABLE addressbooks DROP principaluri');
-        $this->addSql('ALTER TABLE addressbooks DROP displayname');
-        $this->addSql('ALTER TABLE addressbooks DROP uri');
-        $this->addSql('ALTER TABLE addressbooks DROP description');
+        // Remove migrated columns from addressbooks table (use IF EXISTS for fresh installs)
+        $this->addSql('ALTER TABLE addressbooks DROP IF EXISTS principaluri');
+        $this->addSql('ALTER TABLE addressbooks DROP IF EXISTS displayname');
+        $this->addSql('ALTER TABLE addressbooks DROP IF EXISTS uri');
+        $this->addSql('ALTER TABLE addressbooks DROP IF EXISTS description');
         
-        // Drop the unique constraint that included the removed columns
-        $this->addSql('ALTER TABLE addressbooks DROP INDEX UNIQ_addressbooks_principaluri_uri');
+        // Drop the unique constraint if it exists (may not exist on fresh installs)
+        $this->addSql('SET @exist := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = \'addressbooks\' AND INDEX_NAME = \'UNIQ_addressbooks_principaluri_uri\')');
+        $this->addSql('SET @sqlstmt := IF(@exist > 0, \'ALTER TABLE addressbooks DROP INDEX UNIQ_addressbooks_principaluri_uri\', \'SELECT 1\')');
+        $this->addSql('PREPARE stmt FROM @sqlstmt');
+        $this->addSql('EXECUTE stmt');
     }
 
     public function down(Schema $schema): void
