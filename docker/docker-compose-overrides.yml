@@ -7,9 +7,40 @@ services:
     command: >
       sh -c "php /var/www/davis/bin/console doctrine:migrations:migrate --no-interaction 2>&1 &&
       /usr/bin/supervisord -c /etc/supervisord.conf"
+    depends_on:
+      - openldap
+    environment:
+      - AUTH_METHOD=LDAP
+      - LDAP_AUTH_URL=ldap://openldap:389
+      - LDAP_DN_PATTERN=uid=%u,ou=users,dc=davis,dc=local
+      - LDAP_MAIL_ATTRIBUTE=mail
+      - LDAP_AUTH_USER_AUTOCREATE=true
+    networks:
+      - davis-net
+
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: davis-openldap
+    environment:
+      - LDAP_ORGANISATION=${LDAP_ORGANISATION:-Davis}
+      - LDAP_DOMAIN=${LDAP_DOMAIN:-davis.local}
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD:-admin}
+      - LDAP_BASE_DN=${LDAP_BASE_DN:-dc=davis,dc=local}
+      - LDAP_TLS=false
+    command: --copy-service
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+      - ./ldap-seed:/container/service/slapd/assets/config/bootstrap/ldif/custom
     networks:
       - davis-net
 
 networks:
   davis-net:
     driver: bridge
+
+volumes:
+  ldap-data:
+    name: davis-ldap-data
+  ldap-config:
+    name: davis-ldap-config

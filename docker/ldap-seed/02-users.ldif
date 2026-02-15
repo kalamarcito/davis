@@ -1,0 +1,9 @@
+dn: uid=testuser,ou=users,dc=davis,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: testuser
+cn: Test User
+sn: User
+mail: testuser@davis.local
+userPassword: testpass
