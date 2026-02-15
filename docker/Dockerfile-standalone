@@ -112,7 +112,7 @@ RUN mkdir -p ./var/log ./var/cache && chown -R www-data:www-data ./var
 RUN docker-php-source delete && \
     rm -rf /var/www/davis/docker
 
-CMD sh -c "php /var/www/davis/bin/console doctrine:migrations:migrate --no-interaction 2>&1 && /usr/bin/supervisord -c /etc/supervisord.conf"
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
 HEALTHCHECK --interval=120s --timeout=10s --start-period=60s --retries=3 \
     CMD curl --fail http://localhost:9000 || exit 1 
