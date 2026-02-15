@@ -13,6 +13,7 @@ namespace App\Services;
 
 use App\Constants;
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\Calendar;
 use App\Entity\CalendarInstance;
 use App\Entity\CalendarObject;
@@ -44,10 +45,15 @@ class BirthdayService
             return;
         }
 
-        $principalUri = $book->getPrincipalUri();
+        $ownerInstance = $this->getOwnerInstance($book);
+        if (!$ownerInstance) {
+            return;
+        }
+
+        $principalUri = $ownerInstance->getPrincipalUri();
         $calendar = $this->ensureBirthdayCalendarExists($principalUri);
 
-        $this->updateCalendar($cardUri, $cardData, $book, $calendar->getCalendar());
+        $this->updateCalendar($cardUri, $cardData, $book, $calendar->getCalendar(), $ownerInstance->getUri());
     }
 
     public function onCardDeleted(int $addressBookId, string $cardUri): void
@@ -58,24 +64,46 @@ class BirthdayService
             return;
         }
 
-        $principalUri = $book->getPrincipalUri();
+        $ownerInstance = $this->getOwnerInstance($book);
+        if (!$ownerInstance) {
+            return;
+        }
+
+        $principalUri = $ownerInstance->getPrincipalUri();
         $calendar = $this->ensureBirthdayCalendarExists($principalUri);
 
-        $objectUri = $book->getUri().'-'.$cardUri.'.ics';
+        $objectUri = $ownerInstance->getUri().'-'.$cardUri.'.ics';
         $calendarObject = $this->doctrine->getRepository(CalendarObject::class)->findOneBy(['calendar' => $calendar, 'uri' => $objectUri]);
 
-        $em = $this->doctrine->getManager();
-        $em->remove($calendarObject);
-        $em->flush();
+        if ($calendarObject) {
+            $em = $this->doctrine->getManager();
+            $em->remove($calendarObject);
+            $em->flush();
+        }
+    }
+
+    private function getOwnerInstance(AddressBook $book): ?AddressBookInstance
+    {
+        foreach ($book->getInstances() as $instance) {
+            if (!$instance->isShared()) {
+                return $instance;
+            }
+        }
+
+        return null;
     }
 
     public function shouldBirthdayCalendarExist(string $principalUri): bool
     {
-        $addressbooks = $this->doctrine->getRepository(AddressBook::class)->findByPrincipalUri($principalUri);
+        $instances = $this->doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri($principalUri);
 
-        return array_reduce($addressbooks, function ($carry, $addressbook) {
-            return $carry || $addressbook->isIncludedInBirthdayCalendar();
-        }, false);
+        foreach ($instances as $instance) {
+            if ($instance->getAddressBook()->isIncludedInBirthdayCalendar()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function ensureBirthdayCalendarExists(string $principalUri): CalendarInstance
@@ -280,12 +308,24 @@ class BirthdayService
         $this->resetForPrincipal($principal);
 
         // Get all address books that should be included and iterate
-        $addressbooks = $this->doctrine->getRepository(AddressBook::class)->findBy(['principalUri' => $principal, 'includedInBirthdayCalendar' => true]);
-        foreach ($addressbooks as $book) {
-            $cards = $this->doctrine->getRepository(Card::class)->findByAddressBook($book);
+        // Address books no longer have principalUri directly — find via instances
+        $instances = $this->doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri($principal);
+        $seen = [];
+        foreach ($instances as $instance) {
+            $book = $instance->getAddressBook();
+            if (!$book->isIncludedInBirthdayCalendar() || isset($seen[$book->getId()])) {
+                continue;
+            }
+            $seen[$book->getId()] = true;
 
+            $ownerInstance = $this->getOwnerInstance($book);
+            if (!$ownerInstance) {
+                continue;
+            }
+
+            $cards = $this->doctrine->getRepository(Card::class)->findByAddressBook($book);
             foreach ($cards as $card) {
-                $this->onCardChanged($book->getId(), $card->getUri(), $card->getCardData());
+                $this->updateCalendar($card->getUri(), $card->getCardData(), $book, $calendarInstance->getCalendar(), $ownerInstance->getUri());
             }
         }
     }
@@ -307,9 +347,9 @@ class BirthdayService
     /**
      * @throws InvalidDataException
      */
-    private function updateCalendar(string $cardUri, string $cardData, AddressBook $book, Calendar $calendar): void
+    private function updateCalendar(string $cardUri, string $cardData, AddressBook $book, Calendar $calendar, string $bookUri = null): void
     {
-        $objectUid = $book->getUri().'-'.$cardUri;
+        $objectUid = ($bookUri ?? 'default').'-'.$cardUri;
         $objectUri = $objectUid.'.ics';
         $calendarData = $this->buildDataFromContact($cardData);
 
