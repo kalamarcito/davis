@@ -6,6 +6,8 @@
 parameters:
     default_database_driver: "mysql"
     default_admin_auth_bypass: "false"
+    auth_method: '%env(default:default_auth_method:AUTH_METHOD)%'
+    default_auth_method: "Basic"
     timezone: '%env(APP_TIMEZONE)%'
     public_calendars_enabled: '%env(default:default_public_calendars_enabled:bool:PUBLIC_CALENDARS_ENABLED)%'
     default_public_calendars_enabled: "true"
@@ -44,6 +46,15 @@ services:
             $LDAPMailAttribute: "%env(LDAP_MAIL_ATTRIBUTE)%"
             $LDAPCertificateCheckingStrategy: "%env(LDAP_CERTIFICATE_CHECKING_STRATEGY)%"
             $autoCreate: "%env(bool:LDAP_AUTH_USER_AUTOCREATE)%"
+
+    App\Services\LDAPManager:
+        arguments:
+            $LDAPAuthUrl: "%env(LDAP_AUTH_URL)%"
+            $LDAPDnPattern: "%env(LDAP_DN_PATTERN)%"
+            $LDAPMailAttribute: "%env(LDAP_MAIL_ATTRIBUTE)%"
+            $LDAPBaseDn: "%env(LDAP_BASE_DN)%"
+            $LDAPAdminDn: "%env(LDAP_ADMIN_DN)%"
+            $LDAPAdminPassword: "%env(LDAP_ADMIN_PASSWORD)%"
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class

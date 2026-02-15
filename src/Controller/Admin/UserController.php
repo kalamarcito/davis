@@ -11,6 +11,7 @@ use App\Entity\Principal;
 use App\Entity\SchedulingObject;
 use App\Entity\User;
 use App\Form\UserType;
+use App\Services\LDAPManager;
 use App\Services\Utils;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -35,8 +36,9 @@ class UserController extends AbstractController
 
     #[Route('/new', name: 'create')]
     #[Route('/edit/{username}', name: 'edit')]
-    public function userCreate(ManagerRegistry $doctrine, Utils $utils, Request $request, ?string $username, TranslatorInterface $trans): Response
+    public function userCreate(ManagerRegistry $doctrine, Utils $utils, Request $request, ?string $username, TranslatorInterface $trans, LDAPManager $ldapManager): Response
     {
+        $isLDAP = 'LDAP' === $this->getParameter('auth_method') && $ldapManager->isConfigured();
         if ($username) {
             $user = $doctrine->getRepository(User::class)->findOneByUsername($username);
             if (!$user) {
@@ -62,16 +64,37 @@ class UserController extends AbstractController
             $email = $form->get('email')->getData();
             $isAdmin = $form->get('isAdmin')->getData();
 
-            // Create password for user
-            if ($username && is_null($user->getPassword())) {
-                // The user is not new and does not want to change its password
-                $user->setPassword($oldHash);
-            } else {
-                $hash = password_hash($user->getPassword(), PASSWORD_DEFAULT);
-                $user->setPassword($hash);
-            }
-
             $entityManager = $doctrine->getManager();
+            $rawPassword = $user->getPassword();
+
+            if ($isLDAP) {
+                // Create or update in LDAP
+                if (null === $user->getId()) {
+                    if (!$rawPassword) {
+                        $this->addFlash('danger', 'Password is required for new LDAP users.');
+                        return $this->redirectToRoute('user_create');
+                    }
+                    if (!$ldapManager->createUser($user->getUsername(), $rawPassword, $displayName, $email)) {
+                        $this->addFlash('danger', 'Failed to create user in LDAP.');
+                        return $this->redirectToRoute('user_create');
+                    }
+                } else {
+                    if (!$ldapManager->updateUser($user->getUsername(), $rawPassword, $displayName, $email)) {
+                        $this->addFlash('danger', 'Failed to update user in LDAP.');
+                        return $this->redirectToRoute('user_edit', ['username' => $username]);
+                    }
+                }
+                // LDAP users don't need a password in the local DB
+                $user->setPassword($username ? ($oldHash ?? '') : '');
+            } else {
+                // Create password for user (local auth)
+                if ($username && is_null($user->getPassword())) {
+                    $user->setPassword($oldHash);
+                } else {
+                    $hash = password_hash($user->getPassword(), PASSWORD_DEFAULT);
+                    $user->setPassword($hash);
+                }
+            }
 
             // If it's a new user, create default calendar and address book, and principal
             if (null === $user->getId()) {
@@ -129,11 +152,17 @@ class UserController extends AbstractController
     }
 
     #[Route('/delete/{username}', name: 'delete')]
-    public function userDelete(ManagerRegistry $doctrine, string $username, TranslatorInterface $trans): Response
+    public function userDelete(ManagerRegistry $doctrine, string $username, TranslatorInterface $trans, LDAPManager $ldapManager): Response
     {
         $user = $doctrine->getRepository(User::class)->findOneByUsername($username);
         if (!$user) {
             throw $this->createNotFoundException('User not found');
+        }
+
+        // Delete from LDAP if configured
+        $isLDAP = 'LDAP' === $this->getParameter('auth_method') && $ldapManager->isConfigured();
+        if ($isLDAP) {
+            $ldapManager->deleteUser($username);
         }
 
         $entityManager = $doctrine->getManager();
