@@ -182,6 +182,11 @@ class CalendarController extends AbstractController
             throw $this->createNotFoundException('Calendar not found');
         }
 
+        // Only the owner can manage sharing
+        if ($instance->isShared()) {
+            throw $this->createAccessDeniedException('Only the owner can share this calendar.');
+        }
+
         if (!is_numeric($request->get('principalId'))) {
             throw new BadRequestHttpException();
         }
@@ -228,6 +233,11 @@ class CalendarController extends AbstractController
             throw $this->createNotFoundException('Calendar not found');
         }
 
+        // Only the owner can delete the calendar
+        if ($instance->isShared()) {
+            throw $this->createAccessDeniedException('Only the owner can delete this calendar.');
+        }
+
         $entityManager = $doctrine->getManager();
 
         $calendarsSubscriptions = $doctrine->getRepository(CalendarSubscription::class)->findByPrincipalUri($instance->getPrincipalUri());
@@ -271,6 +281,11 @@ class CalendarController extends AbstractController
         $instance = $doctrine->getRepository(CalendarInstance::class)->findOneById($id);
         if (!$instance) {
             throw $this->createNotFoundException('Calendar not found');
+        }
+
+        // Users can only revoke their own shared instance
+        if ($instance->getPrincipalUri() !== Principal::PREFIX.$username) {
+            throw $this->createAccessDeniedException('You can only revoke your own shared access.');
         }
 
         $entityManager = $doctrine->getManager();
