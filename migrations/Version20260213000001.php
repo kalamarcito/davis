@@ -24,6 +24,12 @@ final class Version20260213000001 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Skip if already applied (table exists from manual setup)
+        if ($schema->hasTable('addressbookinstances')) {
+            $this->addSql('SELECT 1');
+            return;
+        }
+
         // Create addressbookinstances table
         $this->addSql('CREATE TABLE addressbookinstances (
             id INT AUTO_INCREMENT NOT NULL, 

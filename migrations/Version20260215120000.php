@@ -16,8 +16,15 @@ final class Version20260215120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE calendarinstances ADD permissions SMALLINT DEFAULT 0 NOT NULL');
-        $this->addSql('ALTER TABLE addressbookinstances ADD permissions SMALLINT DEFAULT 0 NOT NULL');
+        $calendarCols = $schema->getTable('calendarinstances')->getColumns();
+        if (!isset($calendarCols['permissions'])) {
+            $this->addSql('ALTER TABLE calendarinstances ADD permissions SMALLINT DEFAULT 0 NOT NULL');
+        }
+
+        $addressBookCols = $schema->getTable('addressbookinstances')->getColumns();
+        if (!isset($addressBookCols['permissions'])) {
+            $this->addSql('ALTER TABLE addressbookinstances ADD permissions SMALLINT DEFAULT 0 NOT NULL');
+        }
     }
 
     public function down(Schema $schema): void
