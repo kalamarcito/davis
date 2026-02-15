@@ -1,0 +1,12 @@
+services:
+  mysql:
+    networks:
+      - davis-net
+
+  davis:
+    networks:
+      - davis-net
+
+networks:
+  davis-net:
+    driver: bridge
