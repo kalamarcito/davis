@@ -11,7 +11,7 @@
 {% for addressbook_instance in addressbook_instances %}
     <div class="list-group-item p-3">
         <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1 me-auto">{{ addressbook_instance.displayName }} {% if addressbook_instance.isShared() %}<span class="badge bg-info">Shared</span>{% endif %}</h5>
+            <h5 class="mb-1 me-auto">{{ addressbook_instance.displayName }}</h5>
             <div class="me-0 text-right d-md-block d-none">
                 <a href="#"
                     data-bs-toggle="modal" data-bs-target="#shareModal"
@@ -29,15 +29,7 @@
             </div>
         </div>
         <p class="mb-1">{{ addressbook_instance.description }}</p>
-        <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook_instance.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook_instance.addressBook.cards|length}) }}
-        {% if addressbook_instance.isShared() %}
-            <br>Access Level: 
-            {% if addressbook_instance.access == 2 %}
-                <span class="badge bg-secondary">Read Only</span>
-            {% elseif addressbook_instance.access == 3 %}
-                <span class="badge bg-primary">Read/Write</span>
-            {% endif %}
-        {% endif %}</small>
+        <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook_instance.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook_instance.addressBook.cards|length}) }}</small>
         <div class="btn-group btn-group-sm mt-3 d-flex d-md-none" role="group">
             <a href="#"
                 data-bs-toggle="modal" data-bs-target="#shareModal"
@@ -56,6 +48,49 @@
     </div>
 {% endfor %}
 </div>
+
+{% if shared_instances|length > 0 %}
+    <h2 class="h4 mt-5 fw-lighter">{{ "addressbooks.shared.with"|trans({'who': principal.displayName}) }}</h2>
+
+    <div class="list-group mt-3">
+    {% for addressbook_instance in shared_instances %}
+        <div class="list-group-item p-3">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1 me-auto">
+                    {{ addressbook_instance.displayName }}
+                    {% if addressbook_instance.access == 2 %}
+                        <span class="badge bg-info ms-1">Read Only</span>
+                    {% elseif addressbook_instance.access == 3 %}
+                        <span class="badge bg-success ms-1">Read/Write</span>
+                    {% endif %}
+                </h5>
+                <div class="me-0 text-right d-md-block d-none">
+                    <a href="{{ path('addressbook_edit',{username: username, id: addressbook_instance.id})}}" class="btn btn-sm btn-outline-primary ms-1">✎ {{ "edit"|trans }}</a>
+                    <a href="#"
+                        data-bs-toggle="modal" data-bs-target="#deleteModal-revoke"
+                        data-href="{{ path('addressbook_revoke',{username: username, id: addressbook_instance.id})}}"
+                        data-flavour="revoke"
+                        class="btn btn-sm btn-outline-danger ms-1"
+                    >🚫 {{ "revoke"|trans }}</a>
+                </div>
+            </div>
+            <p class="mb-1">{{ addressbook_instance.description }}</p>
+            <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook_instance.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook_instance.addressBook.cards|length}) }}</small>
+            <div class="btn-group btn-group-sm mt-3 d-flex d-md-none" role="group">
+                <a href="{{ path('addressbook_edit',{username: username, id: addressbook_instance.id})}}" class="btn btn-outline-primary">✎ {{ "edit"|trans }}</a>
+                <a href="#"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal-revoke"
+                    data-href="{{ path('addressbook_revoke',{username: username, id: addressbook_instance.id})}}"
+                    data-flavour="revoke"
+                    class="btn btn-outline-danger"
+                >🚫 {{ "revoke"|trans }}</a>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
+    {% include '_partials/delete_modal.html.twig' with {flavour: 'revoke'} %}
+{% endif %}
 
 {% include '_partials/share_modal.html.twig' with {principals: allPrincipals} %}
 {% include '_partials/delete_modal.html.twig' with {flavour: 'addressbooks'} %}

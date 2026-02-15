@@ -25,12 +25,23 @@ class AddressBookController extends AbstractController
     public function addressBooks(ManagerRegistry $doctrine, string $username): Response
     {
         $principal = $doctrine->getRepository(Principal::class)->findOneByUri(Principal::PREFIX.$username);
-        $addressbookInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri(Principal::PREFIX.$username);
+        $allInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri(Principal::PREFIX.$username);
+
+        $owned = [];
+        $shared = [];
+        foreach ($allInstances as $instance) {
+            if ($instance->isShared()) {
+                $shared[] = $instance;
+            } else {
+                $owned[] = $instance;
+            }
+        }
 
         $allPrincipals = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal(Principal::PREFIX.$username);
 
         return $this->render('addressbooks/index.html.twig', [
-            'addressbook_instances' => $addressbookInstances,
+            'addressbook_instances' => $owned,
+            'shared_instances' => $shared,
             'principal' => $principal,
             'username' => $username,
             'allPrincipals' => $allPrincipals,

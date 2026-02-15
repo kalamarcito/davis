@@ -209,6 +209,10 @@
         <source>addressbooks.contacts</source>
         <target>{count, plural, =0 {Kein Kontakt} one {Ein Kontakt} other {# Kontakte}}</target>
       </trans-unit>
+      <trans-unit id="aB_shared" resname="addressbooks.shared.with">
+        <source>addressbooks.shared.with</source>
+        <target>Mit {who} geteilte Adressbücher</target>
+      </trans-unit>
       <trans-unit id="CqvStpa" resname="calendars.for">
         <source>calendars.for</source>
         <target>Kalender für {who}</target>
