@@ -34,10 +34,23 @@
             {% endif %}
             </small>
           </div>
+          <h6 class="mt-3">{{ "sharing.permissions"|trans }}</h6>
           <div class="form-check form-switch mt-2">
-            <input class="form-check-input" type="checkbox" role="switch" value="" id="shareModal-writeAccess" {% if principals|length == 0 %}disabled="disabled"{% endif %}>
-            <label class="form-check-label" for="write">
-              {{ "calendars.delegates.write.give"|trans }}
+            <input class="form-check-input" type="checkbox" role="switch" id="shareModal-canWrite" {% if principals|length == 0 %}disabled="disabled"{% endif %}>
+            <label class="form-check-label" for="shareModal-canWrite">
+              ✏️ {{ "sharing.perm.write"|trans }}
+            </label>
+          </div>
+          <div class="form-check form-switch mt-1">
+            <input class="form-check-input" type="checkbox" role="switch" id="shareModal-canCreate" {% if principals|length == 0 %}disabled="disabled"{% endif %}>
+            <label class="form-check-label" for="shareModal-canCreate">
+              ➕ {{ "sharing.perm.create"|trans }}
+            </label>
+          </div>
+          <div class="form-check form-switch mt-1">
+            <input class="form-check-input" type="checkbox" role="switch" id="shareModal-canDelete" {% if principals|length == 0 %}disabled="disabled"{% endif %}>
+            <label class="form-check-label" for="shareModal-canDelete">
+              🗑️ {{ "sharing.perm.delete"|trans }}
             </label>
           </div>
         </form>

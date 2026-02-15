@@ -609,6 +609,22 @@
         <source>calendars.auto</source>
         <target>Automatically generated</target>
       </trans-unit>
+      <trans-unit id="perm_title" resname="sharing.permissions">
+        <source>sharing.permissions</source>
+        <target>Permissions</target>
+      </trans-unit>
+      <trans-unit id="perm_write" resname="sharing.perm.write">
+        <source>sharing.perm.write</source>
+        <target>Edit existing items</target>
+      </trans-unit>
+      <trans-unit id="perm_create" resname="sharing.perm.create">
+        <source>sharing.perm.create</source>
+        <target>Create new items</target>
+      </trans-unit>
+      <trans-unit id="perm_delete" resname="sharing.perm.delete">
+        <source>sharing.perm.delete</source>
+        <target>Delete items</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

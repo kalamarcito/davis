@@ -185,6 +185,9 @@ class AddressBookController extends AbstractController
                 'email' => $principal ? $principal->getEmail() : '',
                 'accessText' => $trans->trans('addressbook.share_access.'.$instance->getAccess()),
                 'isWriteAccess' => SharingPlugin::ACCESS_READWRITE === $instance->getAccess(),
+                'canWrite' => $instance->canWrite(),
+                'canCreate' => $instance->canCreate(),
+                'canDelete' => $instance->canDelete(),
                 'revokeUrl' => $this->generateUrl('addressbook_revoke', ['username' => $username, 'id' => $instance->getId()]),
             ];
         }
@@ -219,12 +222,30 @@ class AddressBookController extends AbstractController
             'principalUri' => $newShareeToAdd->getUri(),
         ]);
 
-        $writeAccess = ('true' === $request->get('write') ? SharingPlugin::ACCESS_READWRITE : SharingPlugin::ACCESS_READ);
+        // Calculate permissions bitmask from request
+        $permissions = 0;
+        if ('true' === $request->get('canWrite')) {
+            $permissions |= 1;
+        }
+        if ('true' === $request->get('canCreate')) {
+            $permissions |= 2;
+        }
+        if ('true' === $request->get('canDelete')) {
+            $permissions |= 4;
+        }
+
+        // Legacy: if 'write' param is sent (old UI), treat as full permissions
+        if ('true' === $request->get('write') && 0 === $permissions) {
+            $permissions = 7;
+        }
+
+        $access = ($permissions > 0) ? SharingPlugin::ACCESS_READWRITE : SharingPlugin::ACCESS_READ;
 
         $entityManager = $doctrine->getManager();
 
         if ($existingSharedInstance) {
-            $existingSharedInstance->setAccess($writeAccess);
+            $existingSharedInstance->setAccess($access);
+            $existingSharedInstance->setPermissions($permissions);
         } else {
             $sharedInstance = new AddressBookInstance();
             $sharedInstance->setAddressBook($instance->getAddressBook())
@@ -233,7 +254,8 @@ class AddressBookController extends AbstractController
                      ->setDisplayName($instance->getDisplayName())
                      ->setUri(UUIDUtil::getUUID())
                      ->setPrincipalUri($newShareeToAdd->getUri())
-                     ->setAccess($writeAccess);
+                     ->setAccess($access)
+                     ->setPermissions($permissions);
             $entityManager->persist($sharedInstance);
         }
 

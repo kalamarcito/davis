@@ -71,6 +71,9 @@ class CalendarInstance
     #[ORM\Column(name: 'public', type: 'boolean', options: ['default' => false])]
     private $public;
 
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $permissions = 0;
+
     public function __construct()
     {
         $this->shareInviteStatus = SharingPlugin::INVITE_ACCEPTED;
@@ -261,5 +264,32 @@ class CalendarInstance
         $this->shareInviteStatus = $shareInviteStatus;
 
         return $this;
+    }
+
+    public function getPermissions(): int
+    {
+        return $this->permissions;
+    }
+
+    public function setPermissions(int $permissions): self
+    {
+        $this->permissions = $permissions;
+
+        return $this;
+    }
+
+    public function canWrite(): bool
+    {
+        return (bool) ($this->permissions & 1);
+    }
+
+    public function canCreate(): bool
+    {
+        return (bool) ($this->permissions & 2);
+    }
+
+    public function canDelete(): bool
+    {
+        return (bool) ($this->permissions & 4);
     }
 }

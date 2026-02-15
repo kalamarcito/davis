@@ -200,12 +200,30 @@ class CalendarController extends AbstractController
         // already existing first, so we can update it:
         $existingSharedInstance = $doctrine->getRepository(CalendarInstance::class)->findSharedInstanceOfInstanceFor($instance->getCalendar()->getId(), $newShareeToAdd->getUri());
 
-        $writeAccess = ('true' === $request->get('write') ? SharingPlugin::ACCESS_READWRITE : SharingPlugin::ACCESS_READ);
+        // Calculate permissions bitmask from request
+        $permissions = 0;
+        if ('true' === $request->get('canWrite')) {
+            $permissions |= 1;
+        }
+        if ('true' === $request->get('canCreate')) {
+            $permissions |= 2;
+        }
+        if ('true' === $request->get('canDelete')) {
+            $permissions |= 4;
+        }
+
+        // Legacy: if 'write' param is sent (old UI), treat as full permissions
+        if ('true' === $request->get('write') && 0 === $permissions) {
+            $permissions = 7;
+        }
+
+        $access = ($permissions > 0) ? SharingPlugin::ACCESS_READWRITE : SharingPlugin::ACCESS_READ;
 
         $entityManager = $doctrine->getManager();
 
         if ($existingSharedInstance) {
-            $existingSharedInstance->setAccess($writeAccess);
+            $existingSharedInstance->setAccess($access);
+            $existingSharedInstance->setPermissions($permissions);
         } else {
             $sharedInstance = new CalendarInstance();
             $sharedInstance->setTransparent(1)
@@ -215,7 +233,8 @@ class CalendarController extends AbstractController
                      ->setDisplayName($instance->getDisplayName())
                      ->setUri(\Sabre\DAV\UUIDUtil::getUUID())
                      ->setPrincipalUri($newShareeToAdd->getUri())
-                     ->setAccess($writeAccess);
+                     ->setAccess($access)
+                     ->setPermissions($permissions);
             $entityManager->persist($sharedInstance);
         }
 

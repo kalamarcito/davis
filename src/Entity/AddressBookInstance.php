@@ -54,6 +54,9 @@ class AddressBookInstance
     #[ORM\Column(name: 'share_invitestatus', type: 'integer', options: ['default' => 2])]
     private $shareInviteStatus;
 
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $permissions = 0;
+
     public function __construct()
     {
         $this->shareInviteStatus = SharingPlugin::INVITE_ACCEPTED;
@@ -176,5 +179,32 @@ class AddressBookInstance
         $this->shareInviteStatus = $shareInviteStatus;
 
         return $this;
+    }
+
+    public function getPermissions(): int
+    {
+        return $this->permissions;
+    }
+
+    public function setPermissions(int $permissions): self
+    {
+        $this->permissions = $permissions;
+
+        return $this;
+    }
+
+    public function canWrite(): bool
+    {
+        return (bool) ($this->permissions & 1);
+    }
+
+    public function canCreate(): bool
+    {
+        return (bool) ($this->permissions & 2);
+    }
+
+    public function canDelete(): bool
+    {
+        return (bool) ($this->permissions & 4);
     }
 }

@@ -14,11 +14,13 @@ if (shareModal) {
         // When adding the sharee, catch the click to add the query parameter
         const addShareeButton = document.getElementById('shareModal-addSharee');
         addShareeButton.addEventListener("click", function(e) {
-            const writeAccess = document.getElementById('shareModal-writeAccess').checked ? 'true' : 'false';
+            const canWrite = document.getElementById('shareModal-canWrite').checked ? 'true' : 'false';
+            const canCreate = document.getElementById('shareModal-canCreate').checked ? 'true' : 'false';
+            const canDelete = document.getElementById('shareModal-canDelete').checked ? 'true' : 'false';
             const principalId = document.getElementById('shareModal-member').value;
 
             e.preventDefault()
-            window.location = targetUrl + "?principalId=" + principalId + "&write=" + writeAccess
+            window.location = targetUrl + "?principalId=" + principalId + "&canWrite=" + canWrite + "&canCreate=" + canCreate + "&canDelete=" + canDelete
         });
 
         const noneElement = document.getElementById('shareModal-none')
