@@ -132,6 +132,11 @@ class AddressBookController extends AbstractController
             throw $this->createNotFoundException('Address Book not found');
         }
 
+        // Only the owner can delete the address book
+        if ($addressbookInstance->isShared()) {
+            throw $this->createAccessDeniedException('Only the owner can delete this address book.');
+        }
+
         $addressbook = $addressbookInstance->getAddressBook();
         $entityManager = $doctrine->getManager();
 
@@ -195,6 +200,11 @@ class AddressBookController extends AbstractController
             throw $this->createNotFoundException('Address Book not found');
         }
 
+        // Only the owner can manage sharing
+        if ($instance->isShared()) {
+            throw $this->createAccessDeniedException('Only the owner can share this address book.');
+        }
+
         if (!is_numeric($request->get('principalId'))) {
             throw new BadRequestHttpException();
         }
@@ -239,6 +249,11 @@ class AddressBookController extends AbstractController
         $instance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($id);
         if (!$instance) {
             throw $this->createNotFoundException('Address Book not found');
+        }
+
+        // Users can only revoke their own shared instance, or the owner can revoke via the shares endpoint
+        if ($instance->getPrincipalUri() !== Principal::PREFIX.$username) {
+            throw $this->createAccessDeniedException('You can only revoke your own shared access.');
         }
 
         $entityManager = $doctrine->getManager();
