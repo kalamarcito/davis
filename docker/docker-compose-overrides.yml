@@ -1,0 +1,15 @@
+services:
+  mysql:
+    networks:
+      - davis-net
+
+  davis:
+    command: >
+      sh -c "php /var/www/davis/bin/console doctrine:migrations:migrate --no-interaction 2>&1 &&
+      /usr/bin/supervisord -c /etc/supervisord.conf"
+    networks:
+      - davis-net
+
+networks:
+  davis-net:
+    driver: bridge
