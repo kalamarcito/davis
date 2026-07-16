@@ -20,6 +20,7 @@ use App\Entity\CalendarObject;
 use App\Entity\Card;
 use App\Entity\Principal;
 use Doctrine\Persistence\ManagerRegistry;
+use Sabre\CalDAV\Backend\PDO as CalendarBackend;
 use Sabre\DAV\Sharing\Plugin as SharingPlugin;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VCard;
@@ -31,10 +32,20 @@ use Sabre\VObject\Reader;
 
 class BirthdayService
 {
+    /**
+     * @var CalendarBackend
+     */
+    private $calendarBackend;
+
     public function __construct(
         private ManagerRegistry $doctrine,
         private string $birthdayReminderOffset,
     ) {
+    }
+
+    public function setBackend(CalendarBackend $calendarBackend)
+    {
+        $this->calendarBackend = $calendarBackend;
     }
 
     public function onCardChanged(int $addressBookId, string $cardUri, string $cardData): void
@@ -51,9 +62,9 @@ class BirthdayService
         }
 
         $principalUri = $ownerInstance->getPrincipalUri();
-        $calendar = $this->ensureBirthdayCalendarExists($principalUri);
+        $calendarInstance = $this->ensureBirthdayCalendarExists($principalUri);
 
-        $this->updateCalendar($cardUri, $cardData, $book, $calendar->getCalendar(), $ownerInstance->getUri());
+        $this->updateCalendar($cardUri, $cardData, $book, $calendarInstance, $ownerInstance->getUri());
     }
 
     public function onCardDeleted(int $addressBookId, string $cardUri): void
@@ -70,16 +81,18 @@ class BirthdayService
         }
 
         $principalUri = $ownerInstance->getPrincipalUri();
-        $calendar = $this->ensureBirthdayCalendarExists($principalUri);
+        $calendarInstance = $this->ensureBirthdayCalendarExists($principalUri);
 
         $objectUri = $ownerInstance->getUri().'-'.$cardUri.'.ics';
-        $calendarObject = $this->doctrine->getRepository(CalendarObject::class)->findOneBy(['calendar' => $calendar, 'uri' => $objectUri]);
 
-        if ($calendarObject) {
-            $em = $this->doctrine->getManager();
-            $em->remove($calendarObject);
-            $em->flush();
-        }
+        $calendar = $calendarInstance->getCalendar();
+        // This is the structure that needs to be passed to the backend methods
+        $calendarId = [$calendar->getId(), $calendarInstance->getId()];
+
+        $this->calendarBackend->deleteCalendarObject(
+            $calendarId,
+            $objectUri
+        );
     }
 
     private function getOwnerInstance(AddressBook $book): ?AddressBookInstance
@@ -127,7 +140,7 @@ class BirthdayService
                     ->setCalendarOrder(0)
                     ->setCalendar($calendar)
                     ->setTransparent(1)
-                    ->setShareInviteStatus(CalendarInstance::INVITE_ACCEPTED)
+                    ->setShareInviteStatus(SharingPlugin::INVITE_ACCEPTED)
                     ->setUri(Constants::BIRTHDAY_CALENDAR_URI);
 
         $em->persist($instance);
@@ -325,12 +338,12 @@ class BirthdayService
 
             $cards = $this->doctrine->getRepository(Card::class)->findByAddressBook($book);
             foreach ($cards as $card) {
-                $this->updateCalendar($card->getUri(), $card->getCardData(), $book, $calendarInstance->getCalendar(), $ownerInstance->getUri());
+                $this->updateCalendar($card->getUri(), $card->getCardData(), $book, $calendarInstance, $ownerInstance->getUri());
             }
         }
     }
 
-    public function birthdayEvenChanged(string $existingCalendarData, VCalendar $newCalendarData): bool
+    public function birthdayEventChanged(string $existingCalendarData, VCalendar $newCalendarData): bool
     {
         try {
             $existingBirthday = Reader::read($existingCalendarData);
@@ -347,52 +360,41 @@ class BirthdayService
     /**
      * @throws InvalidDataException
      */
-    private function updateCalendar(string $cardUri, string $cardData, AddressBook $book, Calendar $calendar, string $bookUri = null): void
+    private function updateCalendar(string $cardUri, string $cardData, AddressBook $book, CalendarInstance $calendarInstance, ?string $bookUri = null): void
     {
         $objectUid = ($bookUri ?? 'default').'-'.$cardUri;
         $objectUri = $objectUid.'.ics';
         $calendarData = $this->buildDataFromContact($cardData);
 
-        $existing = $this->doctrine->getRepository(CalendarObject::class)->findOneBy(['calendar' => $calendar, 'uri' => $objectUri]);
+        $calendar = $calendarInstance->getCalendar();
+        // This is the structure that needs to be passed to the backend methods
+        $calendarId = [$calendar->getId(), $calendarInstance->getId()];
 
-        $em = $this->doctrine->getManager();
+        $existing = $this->doctrine->getRepository(CalendarObject::class)->findOneBy(['calendar' => $calendar, 'uri' => $objectUri]);
 
         if (null === $calendarData) {
             if (null !== $existing) {
-                $em->remove($existing);
+                $this->calendarBackend->deleteCalendarObject(
+                    [$calendar->getId(), $calendarInstance->getId()],
+                    $objectUri
+                );
             }
         } else {
-            $serializedCalendarData = $calendarData->serialize();
-            $vEvent = $calendarData->getComponents()[0];
-            $maxDate = new \DateTime(Constants::MAX_DATE);
-
             if (null === $existing) {
-                $calendarObject = (new CalendarObject())
-                            ->setCalendar($calendar)
-                            ->setUri($objectUri)
-                            ->setComponentType('VEVENT')
-                            ->setUid($objectUid)
-                            ->setLastModified((new \DateTime())->getTimestamp())
-                            ->setFirstOccurence($vEvent->DTSTART->getDateTime()->getTimeStamp())
-                            ->setLastOccurence($maxDate->getTimestamp())
-                            ->setEtag(md5($serializedCalendarData))
-                            ->setSize(strlen($serializedCalendarData))
-                            ->setCalendarData($serializedCalendarData);
-
-                $em->persist($calendarObject);
+                $this->calendarBackend->createCalendarObject(
+                    [$calendar->getId(), $calendarInstance->getId()],
+                    $objectUri,
+                    $calendarData->serialize()
+                );
             } else {
-                if ($this->birthdayEvenChanged($existing->getCalendarData(), $calendarData)) {
-                    $existing
-                        ->setLastModified((new \DateTime())->getTimestamp())
-                        ->setFirstOccurence($vEvent->DTSTART->getDateTime()->getTimeStamp())
-                        ->setLastOccurence($maxDate->getTimestamp())
-                        ->setEtag(md5($serializedCalendarData))
-                        ->setSize(strlen($serializedCalendarData))
-                        ->setCalendarData($serializedCalendarData);
+                if ($this->birthdayEventChanged($existing->getCalendarData(), $calendarData)) {
+                    $this->calendarBackend->updateCalendarObject(
+                        [$calendar->getId(), $calendarInstance->getId()],
+                        $objectUri,
+                        $calendarData->serialize()
+                    );
                 }
             }
         }
-
-        $em->flush();
     }
 }

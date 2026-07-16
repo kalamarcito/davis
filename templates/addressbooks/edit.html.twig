@@ -3,7 +3,7 @@
 
 {% block body %}
 
-{% include '_partials/back_button.html.twig' with { url: path('addressbook_index', {username: username}), text: "addressbooks.back"|trans({'user': principal.displayName }) } %}
+{% include '_partials/back_button.html.twig' with { url: path('addressbook_index', {userId: userId}), text: "addressbooks.back"|trans({'user': principal.displayName }) } %}
 
 {% if addressbook_instance.id %}
 <h1 class="display-4 fw-lighter mb-5">{{ "addressbooks.edit"|trans({'name': addressbook_instance.displayName }) }} {% if is_shared %}<span class="badge bg-info">Shared</span>{% endif %}</h1>

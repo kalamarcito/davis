@@ -7,6 +7,32 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 class ApiControllerTest extends WebTestCase
 {
     /*
+     * Helper function to get an existing user ID from the user list
+     *
+     * @param int  $index   Index of the user in the list (0 - first user, 1 - second user)
+     * @param mixed $client
+     *
+     * @return int User ID
+     */
+    private function getUserId($client, int $index): int
+    {
+        $client->request('GET', '/api/v1/users', [], [], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('data', $data);
+        $this->assertStringContainsString('test_user', $data['data'][$index]['username']);
+
+        return $data['data'][$index]['user_id'];
+    }
+
+    /*
      * Helper function to get an existing username from the user list
      *
      * @param int  $index   Index of the user in the list (0 - first user, 1 - second user)
@@ -35,15 +61,15 @@ class ApiControllerTest extends WebTestCase
     /*
      * Helper function to get an existing calendar ID from the user calendar list
      *
-     * @param mixed  $client
-     * @param string $username
-     * @param bool   $default  Whether to get the default calendar (true) or the second calendar (false)
+     * @param mixed $client
+     * @param int   $userId
+     * @param bool  $default  Whether to get the default calendar (true) or the second calendar (false)
      *
      * @return int Calendar ID
      */
-    private function getCalendarId($client, string $username, bool $default = true): int
+    private function getCalendarId($client, int $userId, bool $default = true): int
     {
-        $client->request('GET', '/api/v1/calendars/'.$username, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -56,11 +82,10 @@ class ApiControllerTest extends WebTestCase
             $this->assertMatchesRegularExpression('/^\d+$/', $data['data']['user_calendars'][0]['id']);
 
             return $data['data']['user_calendars'][0]['id'];
-        } else {
-            $this->assertMatchesRegularExpression('/^\d+$/', $data['data']['user_calendars'][1]['id']);
-
-            return $data['data']['user_calendars'][1]['id'];
         }
+        $this->assertMatchesRegularExpression('/^\d+$/', $data['data']['user_calendars'][1]['id']);
+
+        return $data['data']['user_calendars'][1]['id'];
     }
 
     /*
@@ -130,6 +155,7 @@ class ApiControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
 
         // Check if user1 is present in db
+        $this->assertArrayHasKey('user_id', $data['data'][0]);
         $this->assertArrayHasKey('principal_id', $data['data'][0]);
         $this->assertArrayHasKey('uri', $data['data'][0]);
         $this->assertStringContainsString('principals/test_user', $data['data'][0]['uri']);
@@ -137,6 +163,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertStringContainsString('test_user', $data['data'][0]['username']);
 
         // Check if user2 is present in db
+        $this->assertArrayHasKey('user_id', $data['data'][1]);
         $this->assertArrayHasKey('principal_id', $data['data'][1]);
         $this->assertArrayHasKey('uri', $data['data'][1]);
         $this->assertStringContainsString('principals/test_user2', $data['data'][1]['uri']);
@@ -152,11 +179,12 @@ class ApiControllerTest extends WebTestCase
         // Create client once
         $client = static::createClient();
 
-        // Get username from existing user lists
+        // Get userId and username from existing user lists
+        $userId = $this->getUserId($client, 0);
         $username = $this->getUserUsername($client, 0);
 
         // Check user details endpoint
-        $client->request('GET', '/api/v1/users/'.$username, [], [], [
+        $client->request('GET', '/api/v1/users/'.$userId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -166,6 +194,8 @@ class ApiControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
 
         // Check if user details are correct
+        $this->assertArrayHasKey('user_id', $data['data']);
+        $this->assertEquals($userId, $data['data']['user_id']);
         $this->assertArrayHasKey('displayname', $data['data']);
         $this->assertStringContainsString('Test User', $data['data']['displayname']);
         $this->assertArrayHasKey('email', $data['data']);
@@ -179,9 +209,9 @@ class ApiControllerTest extends WebTestCase
     public function testUserCalendarsList(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
 
-        $client->request('GET', '/api/v1/calendars/'.$username, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -206,10 +236,10 @@ class ApiControllerTest extends WebTestCase
     public function testUserCalendarDetails(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
 
         // Get calendar list to retrieve calendar ID
-        $client->request('GET', '/api/v1/calendars/'.$username, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -220,7 +250,7 @@ class ApiControllerTest extends WebTestCase
         $calendar_id = $data['data']['user_calendars'][0]['id'];
 
         // Check calendar details endpoint
-        $client->request('GET', '/api/v1/calendars/'.$username.'/'.$calendar_id, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/'.$calendar_id, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -250,7 +280,7 @@ class ApiControllerTest extends WebTestCase
     public function testCreateUserCalendar(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
 
         // Create calendar API request with JSON body
         $payload = [
@@ -262,7 +292,7 @@ class ApiControllerTest extends WebTestCase
             'notes_support' => false,
         ];
 
-        $client->request('POST', '/api/v1/calendars/'.$username.'/create', [], [], [
+        $client->request('POST', '/api/v1/calendars/'.$userId.'/create', [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -281,7 +311,7 @@ class ApiControllerTest extends WebTestCase
 
         // Check if calendar is created
         $calendarId = $data['data']['calendar_id'];
-        $client->request('GET', '/api/v1/calendars/'.$username.'/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -304,8 +334,8 @@ class ApiControllerTest extends WebTestCase
     public function testEditUserCalendar(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $userId = $this->getUserId($client, 0);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Edit user default calendar
         $payload = [
@@ -315,7 +345,7 @@ class ApiControllerTest extends WebTestCase
             'tasks_support' => true,
             'notes_support' => true,
         ];
-        $client->request('POST', '/api/v1/calendars/'.$username.'/'.$calendarId.'/edit', [], [], [
+        $client->request('PATCH', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -328,7 +358,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals('success', $data['status']);
 
         // Check if edits were applied
-        $client->request('GET', '/api/v1/calendars/'.$username.'/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -354,11 +384,11 @@ class ApiControllerTest extends WebTestCase
     public function testGetUserCalendarSharesEmpty(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $userId = $this->getUserId($client, 0);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Get shares for user default calendar
-        $client->request('GET', '/api/v1/calendars/'.$username.'/shares/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/shares/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -378,16 +408,16 @@ class ApiControllerTest extends WebTestCase
     public function testShareUserCalendar(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
         $shareeUsername = $this->getUserUsername($client, 1);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Share user default calendar to test_user2
         $payload = [
             'username' => $shareeUsername,
             'write_access' => false,
         ];
-        $client->request('POST', '/api/v1/calendars/'.$username.'/share/'.$calendarId.'/add', [], [], [
+        $client->request('POST', '/api/v1/calendars/'.$userId.'/share/'.$calendarId.'/add', [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -400,7 +430,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals('success', $data['status']);
 
         // Check if share was applied
-        $client->request('GET', '/api/v1/calendars/'.$username.'/shares/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/shares/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -411,6 +441,8 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals('success', $data['status']);
         $this->assertArrayHasKey('data', $data);
         $this->assertStringContainsString($shareeUsername, $data['data'][0]['username']);
+        $this->assertArrayHasKey('user_id', $data['data'][0]);
+        $this->assertIsNumeric($data['data'][0]['user_id']);
         $this->assertFalse($data['data'][0]['write_access']);
     }
 
@@ -420,15 +452,15 @@ class ApiControllerTest extends WebTestCase
     public function testUnshareUserCalendar(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
         $shareeUsername = $this->getUserUsername($client, 1);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Unshare user default calendar from test_user2
         $payload = [
             'username' => $shareeUsername,
         ];
-        $client->request('POST', '/api/v1/calendars/'.$username.'/share/'.$calendarId.'/remove', [], [], [
+        $client->request('POST', '/api/v1/calendars/'.$userId.'/share/'.$calendarId.'/remove', [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -440,7 +472,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals('success', $data['status']);
 
         // Check if unshare was applied
-        $client->request('GET', '/api/v1/calendars/'.$username.'/shares/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/shares/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);
@@ -459,7 +491,7 @@ class ApiControllerTest extends WebTestCase
     public function testCreateUserCalendarNoComponents(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
+        $userId = $this->getUserId($client, 0);
 
         // Create calendar API request with no components enabled
         $payload = [
@@ -471,7 +503,7 @@ class ApiControllerTest extends WebTestCase
             'notes_support' => false,
         ];
 
-        $client->request('POST', '/api/v1/calendars/'.$username.'/create', [], [], [
+        $client->request('POST', '/api/v1/calendars/'.$userId.'/create', [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -491,8 +523,8 @@ class ApiControllerTest extends WebTestCase
     public function testEditUserCalendarNoComponents(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $userId = $this->getUserId($client, 0);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Edit calendar API request with no components enabled
         $payload = [
@@ -503,7 +535,7 @@ class ApiControllerTest extends WebTestCase
             'notes_support' => false,
         ];
 
-        $client->request('POST', '/api/v1/calendars/'.$username.'/'.$calendarId.'/edit', [], [], [
+        $client->request('PUT', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -523,11 +555,11 @@ class ApiControllerTest extends WebTestCase
     public function testDeleteUserCalendar(): void
     {
         $client = static::createClient();
-        $username = $this->getUserUsername($client, 0);
-        $calendarId = $this->getCalendarId($client, $username, true);
+        $userId = $this->getUserId($client, 0);
+        $calendarId = $this->getCalendarId($client, $userId, true);
 
         // Delete the calendar
-        $client->request('POST', '/api/v1/calendars/'.$username.'/'.$calendarId.'/delete', [], [], [
+        $client->request('DELETE', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
             'CONTENT_TYPE' => 'application/json',
@@ -540,7 +572,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals('success', $data['status']);
 
         // Check if calendar is deleted
-        $client->request('GET', '/api/v1/calendars/'.$username.'/'.$calendarId, [], [], [
+        $client->request('GET', '/api/v1/calendars/'.$userId.'/'.$calendarId, [], [], [
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_DAVIS_API_TOKEN' => $_ENV['API_KEY'],
         ]);

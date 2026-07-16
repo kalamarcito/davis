@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\AddressBook;
 use App\Entity\AddressBookInstance;
 use App\Entity\Principal;
+use App\Entity\User;
 use App\Form\AddressBookType;
 use App\Services\BirthdayService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,11 +22,18 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/addressbooks', name: 'addressbook_')]
 class AddressBookController extends AbstractController
 {
-    #[Route('/{username}', name: 'index')]
-    public function addressBooks(ManagerRegistry $doctrine, string $username): Response
+    #[Route('/{userId}', name: 'index')]
+    public function addressBooks(ManagerRegistry $doctrine, int $userId): Response
     {
-        $principal = $doctrine->getRepository(Principal::class)->findOneByUri(Principal::PREFIX.$username);
-        $allInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri(Principal::PREFIX.$username);
+        $user = $doctrine->getRepository(User::class)->findOneById($userId);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        $principalUri = Principal::PREFIX.$user->getUsername();
+
+        $principal = $doctrine->getRepository(Principal::class)->findOneByUri($principalUri);
+        $allInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri($principalUri);
 
         $owned = [];
         $shared = [];
@@ -37,22 +45,30 @@ class AddressBookController extends AbstractController
             }
         }
 
-        $allPrincipals = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal(Principal::PREFIX.$username);
+        $allPrincipals = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal($principalUri);
 
         return $this->render('addressbooks/index.html.twig', [
             'addressbook_instances' => $owned,
             'shared_instances' => $shared,
             'principal' => $principal,
-            'username' => $username,
+            'userId' => $userId,
             'allPrincipals' => $allPrincipals,
         ]);
     }
 
-    #[Route('/{username}/new', name: 'create')]
-    #[Route('/{username}/edit/{id}', name: 'edit', requirements: ['id' => "\d+"])]
-    public function addressbookCreate(ManagerRegistry $doctrine, Request $request, string $username, ?int $id, TranslatorInterface $trans, BirthdayService $birthdayService): Response
+    #[Route('/{userId}/new', name: 'create')]
+    #[Route('/{userId}/edit/{id}', name: 'edit', requirements: ['id' => "\d+"])]
+    public function addressbookCreate(ManagerRegistry $doctrine, Request $request, int $userId, ?int $id, TranslatorInterface $trans, BirthdayService $birthdayService): Response
     {
-        $principal = $doctrine->getRepository(Principal::class)->findOneByUri(Principal::PREFIX.$username);
+        $user = $doctrine->getRepository(User::class)->findOneById($userId);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        $username = $user->getUsername();
+        $principalUri = Principal::PREFIX.$username;
+
+        $principal = $doctrine->getRepository(Principal::class)->findOneByUri($principalUri);
 
         if (!$principal) {
             throw $this->createNotFoundException('User not found');
@@ -110,13 +126,13 @@ class AddressBookController extends AbstractController
 
             $entityManager->flush();
 
-            return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+            return $this->redirectToRoute('addressbook_index', ['userId' => $userId]);
         }
 
         return $this->render('addressbooks/edit.html.twig', [
             'form' => $form->createView(),
             'principal' => $principal,
-            'username' => $username,
+            'userId' => $userId,
             'addressbook_instance' => $addressbookInstance,
             'addressbook' => $addressbook,
             'is_shared' => $addressbookInstance->isShared(),
@@ -124,9 +140,14 @@ class AddressBookController extends AbstractController
         ]);
     }
 
-    #[Route('/{username}/delete/{id}', name: 'delete', requirements: ['id' => "\d+"])]
-    public function addressbookDelete(ManagerRegistry $doctrine, string $username, string $id, TranslatorInterface $trans, BirthdayService $birthdayService): Response
+    #[Route('/{userId}/delete/{id}', name: 'delete', requirements: ['id' => "\d+"])]
+    public function addressbookDelete(ManagerRegistry $doctrine, int $userId, string $id, TranslatorInterface $trans, BirthdayService $birthdayService): Response
     {
+        $user = $doctrine->getRepository(User::class)->findOneById($userId);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
         $addressbookInstance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($id);
         if (!$addressbookInstance) {
             throw $this->createNotFoundException('Address Book not found');
@@ -161,14 +182,14 @@ class AddressBookController extends AbstractController
         $isBirthdayCalendarEnabled = $this->getParameter('caldav_enabled') && $this->getParameter('carddav_enabled');
         if ($isBirthdayCalendarEnabled) {
             // Let's sync the user birthday calendar if needed
-            $birthdayService->syncUser($username);
+            $birthdayService->syncUser($user->getUsername());
         }
 
-        return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+        return $this->redirectToRoute('addressbook_index', ['userId' => $userId]);
     }
 
-    #[Route('/{username}/shares/{addressbookid}', name: 'shares', requirements: ['addressbookid' => "\d+"])]
-    public function addressBookShares(ManagerRegistry $doctrine, string $username, string $addressbookid, TranslatorInterface $trans): Response
+    #[Route('/{userId}/shares/{addressbookid}', name: 'shares', requirements: ['addressbookid' => "\d+"])]
+    public function addressBookShares(ManagerRegistry $doctrine, int $userId, string $addressbookid, TranslatorInterface $trans): Response
     {
         $instances = $doctrine->getRepository(AddressBookInstance::class)->findBy(['addressBook' => $addressbookid]);
 
@@ -188,15 +209,15 @@ class AddressBookController extends AbstractController
                 'canWrite' => $instance->canWrite(),
                 'canCreate' => $instance->canCreate(),
                 'canDelete' => $instance->canDelete(),
-                'revokeUrl' => $this->generateUrl('addressbook_revoke', ['username' => $username, 'id' => $instance->getId()]),
+                'revokeUrl' => $this->generateUrl('addressbook_revoke', ['userId' => $userId, 'id' => $instance->getId()]),
             ];
         }
 
         return new JsonResponse($response);
     }
 
-    #[Route('/{username}/share/{instanceid}', name: 'share_add', requirements: ['instanceid' => "\d+"])]
-    public function addressBookShareAdd(ManagerRegistry $doctrine, Request $request, string $username, string $instanceid, TranslatorInterface $trans): Response
+    #[Route('/{userId}/share/{instanceid}', name: 'share_add', requirements: ['instanceid' => "\d+"])]
+    public function addressBookShareAdd(ManagerRegistry $doctrine, Request $request, int $userId, string $instanceid, TranslatorInterface $trans): Response
     {
         $instance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($instanceid);
         if (!$instance) {
@@ -262,19 +283,24 @@ class AddressBookController extends AbstractController
         $entityManager->flush();
         $this->addFlash('success', $trans->trans('addressbook.shared'));
 
-        return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+        return $this->redirectToRoute('addressbook_index', ['userId' => $userId]);
     }
 
-    #[Route('/{username}/revoke/{id}', name: 'revoke', requirements: ['id' => "\d+"])]
-    public function addressBookRevoke(ManagerRegistry $doctrine, string $username, string $id, TranslatorInterface $trans): Response
+    #[Route('/{userId}/revoke/{id}', name: 'revoke', requirements: ['id' => "\d+"])]
+    public function addressBookRevoke(ManagerRegistry $doctrine, int $userId, string $id, TranslatorInterface $trans): Response
     {
+        $user = $doctrine->getRepository(User::class)->findOneById($userId);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
         $instance = $doctrine->getRepository(AddressBookInstance::class)->findOneById($id);
         if (!$instance) {
             throw $this->createNotFoundException('Address Book not found');
         }
 
         // Users can only revoke their own shared instance, or the owner can revoke via the shares endpoint
-        if ($instance->getPrincipalUri() !== Principal::PREFIX.$username) {
+        if ($instance->getPrincipalUri() !== Principal::PREFIX.$user->getUsername()) {
             throw $this->createAccessDeniedException('You can only revoke your own shared access.');
         }
 
@@ -284,6 +310,6 @@ class AddressBookController extends AbstractController
 
         $this->addFlash('success', $trans->trans('addressbook.revoked'));
 
-        return $this->redirectToRoute('addressbook_index', ['username' => $username]);
+        return $this->redirectToRoute('addressbook_index', ['userId' => $userId]);
     }
 }

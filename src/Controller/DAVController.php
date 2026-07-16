@@ -287,7 +287,7 @@ class DAVController extends AbstractController
         }
 
         if ($this->cardDAVEnabled && $this->calDAVEnabled) {
-            $this->server->addPlugin(new BirthdayCalendarPlugin($this->birthdayService));
+            $this->server->addPlugin(new BirthdayCalendarPlugin($this->birthdayService, $calendarBackend));
         }
 
         // WebDAV plugins
