@@ -15,9 +15,6 @@ services:
       - LDAP_DN_PATTERN=uid=%u,ou=users,dc=davis,dc=local
       - LDAP_MAIL_ATTRIBUTE=mail
       - LDAP_AUTH_USER_AUTOCREATE=true
-      - LDAP_BASE_DN=${LDAP_BASE_DN:-dc=davis,dc=local}
-      - LDAP_ADMIN_DN=${LDAP_ADMIN_DN:-cn=admin,dc=davis,dc=local}
-      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD:-admin}
     networks:
       - davis-net
 
