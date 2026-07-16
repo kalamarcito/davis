@@ -35,19 +35,6 @@ services:
     networks:
       - davis-net
 
-  phpldapadmin:
-    image: osixia/phpldapadmin:0.9.0
-    container_name: davis-phpldapadmin
-    environment:
-      - PHPLDAPADMIN_LDAP_HOSTS=openldap
-      - PHPLDAPADMIN_HTTPS=false
-    depends_on:
-      - openldap
-    ports:
-      - 9001:80
-    networks:
-      - davis-net
-
 networks:
   davis-net:
     driver: bridge
