@@ -6,6 +6,7 @@ namespace App\Tests\Functional\Command;
 
 use App\Constants;
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\CalendarInstance;
 use App\Entity\CalendarObject;
 use App\Entity\Card;
@@ -67,13 +68,18 @@ class SyncBirthdayCalendarTest extends KernelTestCase
     private function createAddressBookWithCard(string $username, string $cardUri, string $cardData): AddressBook
     {
         $addressBook = (new AddressBook())
-            ->setPrincipalUri(Principal::PREFIX.$username)
-            ->setUri('default')
-            ->setDisplayName('Default')
-            ->setDescription('')
             ->setSynctoken('1')
             ->setIncludedInBirthdayCalendar(true);
         $this->em->persist($addressBook);
+
+        // principalUri/uri/displayName now live on the (owner) instance, not the book itself
+        $addressBookInstance = (new AddressBookInstance())
+            ->setAddressBook($addressBook)
+            ->setPrincipalUri(Principal::PREFIX.$username)
+            ->setUri('default')
+            ->setDisplayName('Default')
+            ->setDescription('');
+        $this->em->persist($addressBookInstance);
 
         $card = (new Card())
             ->setAddressBook($addressBook)

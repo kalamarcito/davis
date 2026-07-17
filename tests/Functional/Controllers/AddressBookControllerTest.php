@@ -2,7 +2,7 @@
 
 namespace App\Tests\Functional;
 
-use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\User;
 use App\Security\AdminUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -45,7 +45,7 @@ class AddressBookControllerTest extends WebTestCase
 
         $userId = $this->getUserId($client, 'test_user');
 
-        $addressbookRepository = static::getContainer()->get('doctrine.orm.entity_manager')->getRepository(AddressBook::class);
+        $addressbookRepository = static::getContainer()->get('doctrine.orm.entity_manager')->getRepository(AddressBookInstance::class);
         $addressbook = $addressbookRepository->findOneByDisplayName('default.addressbook.title');
 
         $client->request('GET', '/addressbooks/'.$userId.'/edit/'.$addressbook->getId());
@@ -104,7 +104,7 @@ class AddressBookControllerTest extends WebTestCase
 
         $userId = $this->getUserId($client, 'test_user');
 
-        $addressbookRepository = static::getContainer()->get('doctrine.orm.entity_manager')->getRepository(AddressBook::class);
+        $addressbookRepository = static::getContainer()->get('doctrine.orm.entity_manager')->getRepository(AddressBookInstance::class);
         $addressbook = $addressbookRepository->findOneByDisplayName('default.addressbook.title');
 
         $client->request('GET', '/addressbooks/'.$userId.'/delete/'.$addressbook->getId());

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\Calendar;
 use App\Entity\CalendarInstance;
 use App\Entity\Principal;
@@ -84,7 +85,9 @@ final class Utils
                         ->setIsMain(false);
 
         $addressbook = new AddressBook();
-        $addressbook->setPrincipalUri(Principal::PREFIX.$username)
+        $addressbookInstance = new AddressBookInstance();
+        $addressbookInstance->setAddressBook($addressbook)
+                ->setPrincipalUri(Principal::PREFIX.$username)
                 ->setUri('default') // No risk of collision since unicity is guaranteed by the new user principal
                 ->setDisplayName($this->trans->trans('default.addressbook.title'))
                 ->setDescription($this->trans->trans('default.addressbook.description', ['user' => $displayName]));
@@ -95,6 +98,7 @@ final class Utils
         $em->persist($principalProxyWrite);
         $em->persist($calendarInstance);
         $em->persist($addressbook);
+        $em->persist($addressbookInstance);
         $em->persist($principal);
         $em->persist($user);
     }

@@ -6,6 +6,7 @@ namespace App\Tests\Services;
 
 use App\Constants;
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\CalendarInstance;
 use App\Entity\CalendarObject;
 use App\Entity\Principal;
@@ -50,13 +51,19 @@ class BirthdayServiceTest extends KernelTestCase
         $this->em->persist($principal);
 
         $addressBook = (new AddressBook())
-            ->setPrincipalUri(Principal::PREFIX.$username)
-            ->setUri('default')
-            ->setDisplayName('Default')
-            ->setDescription('')
             ->setSynctoken('1')
             ->setIncludedInBirthdayCalendar($includedInBirthdayCalendar);
         $this->em->persist($addressBook);
+
+        // principalUri/uri/displayName now live on the (owner) instance, not the book itself
+        $addressBookInstance = (new AddressBookInstance())
+            ->setAddressBook($addressBook)
+            ->setPrincipalUri(Principal::PREFIX.$username)
+            ->setUri('default')
+            ->setDisplayName('Default')
+            ->setDescription('');
+        $this->em->persist($addressBookInstance);
+
         $this->em->flush();
 
         return $addressBook;

@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\AddressBook;
+use App\Entity\AddressBookInstance;
 use App\Entity\Calendar;
 use App\Entity\CalendarInstance;
 use App\Entity\Principal;
@@ -50,11 +51,14 @@ class AppFixtures extends Fixture
         $manager->persist($principalProxyWrite);
 
         $addressbook = new AddressBook();
-        $addressbook->setPrincipalUri(Principal::PREFIX.$user->getUsername())
+        $addressbookInstance = new AddressBookInstance();
+        $addressbookInstance->setPrincipalUri(Principal::PREFIX.$user->getUsername())
                     ->setUri('default')
                     ->setDisplayName('default.addressbook.title')
-                    ->setDescription('default.addressbook.description');
+                    ->setDescription('default.addressbook.description')
+                    ->setAddressBook($addressbook);
         $manager->persist($addressbook);
+        $manager->persist($addressbookInstance);
 
         $manager->flush();
 
@@ -94,11 +98,14 @@ class AppFixtures extends Fixture
         $manager->persist($principalProxyWrite);
 
         $addressbook = new AddressBook();
-        $addressbook->setPrincipalUri(Principal::PREFIX.$user->getUsername())
+        $addressbookInstance = new AddressBookInstance();
+        $addressbookInstance->setPrincipalUri(Principal::PREFIX.$user->getUsername())
                     ->setUri('default')
                     ->setDisplayName('default.addressbook.title2')
-                    ->setDescription('default.addressbook.description2');
+                    ->setDescription('default.addressbook.description2')
+                    ->setAddressBook($addressbook);
         $manager->persist($addressbook);
+        $manager->persist($addressbookInstance);
 
         $manager->flush();
     }
