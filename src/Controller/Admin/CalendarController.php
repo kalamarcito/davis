@@ -315,13 +315,18 @@ class CalendarController extends AbstractController
     #[Route('/{userId}/revoke/{id}', name: 'revoke', requirements: ['id' => "\d+"])]
     public function calendarRevoke(ManagerRegistry $doctrine, int $userId, string $id, TranslatorInterface $trans): Response
     {
+        $user = $doctrine->getRepository(User::class)->findOneById($userId);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
         $instance = $doctrine->getRepository(CalendarInstance::class)->findOneById($id);
         if (!$instance) {
             throw $this->createNotFoundException('Calendar not found');
         }
 
         // Users can only revoke their own shared instance
-        if ($instance->getPrincipalUri() !== Principal::PREFIX.$username) {
+        if ($instance->getPrincipalUri() !== Principal::PREFIX.$user->getUsername()) {
             throw $this->createAccessDeniedException('You can only revoke your own shared access.');
         }
 
