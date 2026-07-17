@@ -10,8 +10,6 @@ FROM php:8.3-fpm-alpine AS base-image
 # Run update, and gets basic packages and packages for runtime
 RUN apk --no-progress --update add --no-cache \
         curl unzip fcgi \
-        # Privilege drop from the entrypoint (runs as root to re-seed the volume)
-        su-exec \
         # These are for php-intl
         icu-libs \
         # This one for LDAP
@@ -107,6 +105,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
     && php ./vendor/symfony/intl/Resources/bin/compress \
     && rm -rf /opt/davis/docker
+
+# su-exec lets the entrypoint drop from root to $FPM_USER (added here, in the
+# final stage, so it does not invalidate the cached extension build above).
+RUN apk --no-progress add --no-cache su-exec
 
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
