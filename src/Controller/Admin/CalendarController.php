@@ -325,9 +325,26 @@ class CalendarController extends AbstractController
             throw $this->createNotFoundException('Calendar not found');
         }
 
-        // Users can only revoke their own shared instance
-        if ($instance->getPrincipalUri() !== Principal::PREFIX.$user->getUsername()) {
-            throw $this->createAccessDeniedException('You can only revoke your own shared access.');
+        $principalUri = Principal::PREFIX.$user->getUsername();
+
+        // Only shared instances can be revoked; owners remove their own
+        // calendars through "delete", not "revoke".
+        if (!$instance->isShared()) {
+            throw $this->createAccessDeniedException('Only shared instances can be revoked.');
+        }
+
+        // A share may be revoked either by the sharee themselves (leaving a
+        // calendar shared with them) or by an owner of the underlying calendar
+        // (removing someone they shared with, from the sharing modal).
+        $isSharee = $instance->getPrincipalUri() === $principalUri;
+        $isOwner = $doctrine->getRepository(CalendarInstance::class)->count([
+            'calendar' => $instance->getCalendar(),
+            'principalUri' => $principalUri,
+            'access' => CalendarInstance::getOwnerAccesses(),
+        ]) > 0;
+
+        if (!$isSharee && !$isOwner) {
+            throw $this->createAccessDeniedException('You can only revoke your own shared access or shares of calendars you own.');
         }
 
         $entityManager = $doctrine->getManager();

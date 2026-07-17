@@ -299,9 +299,26 @@ class AddressBookController extends AbstractController
             throw $this->createNotFoundException('Address Book not found');
         }
 
-        // Users can only revoke their own shared instance, or the owner can revoke via the shares endpoint
-        if ($instance->getPrincipalUri() !== Principal::PREFIX.$user->getUsername()) {
-            throw $this->createAccessDeniedException('You can only revoke your own shared access.');
+        $principalUri = Principal::PREFIX.$user->getUsername();
+
+        // Only shared instances can be revoked; owners remove their own address
+        // books through "delete", not "revoke".
+        if (!$instance->isShared()) {
+            throw $this->createAccessDeniedException('Only shared instances can be revoked.');
+        }
+
+        // A share may be revoked either by the sharee themselves (leaving an
+        // address book shared with them) or by an owner of the underlying
+        // address book (removing someone they shared with, from the modal).
+        $isSharee = $instance->getPrincipalUri() === $principalUri;
+        $isOwner = $doctrine->getRepository(AddressBookInstance::class)->count([
+            'addressBook' => $instance->getAddressBook(),
+            'principalUri' => $principalUri,
+            'access' => AddressBookInstance::getOwnerAccesses(),
+        ]) > 0;
+
+        if (!$isSharee && !$isOwner) {
+            throw $this->createAccessDeniedException('You can only revoke your own shared access or shares of address books you own.');
         }
 
         $entityManager = $doctrine->getManager();
