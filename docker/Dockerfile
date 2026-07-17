@@ -10,6 +10,8 @@ FROM php:8.3-fpm-alpine AS base-image
 # Run update, and gets basic packages and packages for runtime
 RUN apk --no-progress --update add --no-cache \
         curl unzip fcgi \
+        # Privilege drop from the entrypoint (runs as root to re-seed the volume)
+        su-exec \
         # These are for php-intl
         icu-libs \
         # This one for LDAP
@@ -90,16 +92,29 @@ RUN curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/v0.5.0
     -o /usr/local/bin/php-fpm-healthcheck -s \
     && chmod +x /usr/local/bin/php-fpm-healthcheck
 
-# Davis installation
-COPY --chown=${FPM_USER} . /var/www/davis
-WORKDIR /var/www/davis
+# Davis installation.
+#
+# The code is built into /opt/davis (a "pristine" copy) instead of directly
+# into /var/www/davis, because at runtime the compose stack mounts the named
+# volume `davis_www` over /var/www/davis and that volume shadows whatever the
+# image ships there. The entrypoint mirrors /opt/davis into the volume on every
+# start so each rebuilt image is actually served (see docker-entrypoint.sh).
+COPY --chown=${FPM_USER} . /opt/davis
+WORKDIR /opt/davis
 
 # Install Composer 2, then dependencies, compress the rather big INTL package, and then cleanup (only useful when using --squash)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
     && php ./vendor/symfony/intl/Resources/bin/compress \
-    && rm -rf /var/www/davis/docker
+    && rm -rf /opt/davis/docker
 
-USER $FPM_USER
+COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# The container starts as root so the entrypoint can re-seed the volume and fix
+# ownership; it then drops to $FPM_USER via su-exec before running php-fpm.
+WORKDIR /var/www/davis
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["php-fpm"]
 
 HEALTHCHECK --interval=30s --timeout=1s CMD php-fpm-healthcheck || exit 1

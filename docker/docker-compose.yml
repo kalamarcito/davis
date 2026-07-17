@@ -34,7 +34,11 @@ services:
       dockerfile: ./docker/Dockerfile
       args:
         fpm_user: 101:101
-    image: davis:latest
+    # Fully-qualified local name so podman builds and runs the *same* image:
+    # a short name like "davis:latest" is normalized to docker.io/library/davis
+    # on build but may resolve to localhost/davis on run, leaving a stale image
+    # running. (On plain Docker this can be simplified back to "davis:latest".)
+    image: localhost/davis:latest
     # If you want to use a prebuilt image from Github
     # image: ghcr.io/tchapi/davis:edge
     container_name: davis
