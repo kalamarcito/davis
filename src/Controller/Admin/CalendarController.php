@@ -177,12 +177,17 @@ class CalendarController extends AbstractController
 
         $response = [];
         foreach ($instances as $instance) {
+            $permissions = $instance[0]['permissions'];
             $response[] = [
+                'principalId' => $instance['principalId'],
                 'principalUri' => $instance[0]['principalUri'],
                 'displayName' => $instance['displayName'],
                 'email' => $instance['email'],
                 'accessText' => $trans->trans('calendar.share_access.'.$instance[0]['access']),
                 'isWriteAccess' => SharingPlugin::ACCESS_READWRITE === $instance[0]['access'],
+                'canWrite' => (bool) ($permissions & 1),
+                'canCreate' => (bool) ($permissions & 2),
+                'canDelete' => (bool) ($permissions & 4),
                 'revokeUrl' => $this->generateUrl('calendar_revoke', ['userId' => $userId, 'id' => $instance[0]['id']]),
             ];
         }

@@ -47,16 +47,33 @@ if (shareModal) {
 
                 data.forEach(element => {
                     const clone = template.content.cloneNode(true);
-                    let name = clone.querySelectorAll("span.name");
-                    name[0].textContent = element.displayName;
-                    let badge = clone.querySelectorAll("span.badge");
-                    badge[0].textContent = element.accessText;
+                    clone.querySelector("span.name").textContent = element.displayName;
+                    const badge = clone.querySelector("span.badge");
+                    badge.textContent = element.accessText;
                     if (element.isWriteAccess) {
-                        badge[0].classList.add('bg-success')
-                        badge[0].classList.remove('bg-info')
+                        badge.classList.add('bg-success')
+                        badge.classList.remove('bg-info')
                     }
-                    let revokeButton = clone.querySelectorAll("a.revoke");
-                    revokeButton[0].href = element.revokeUrl;
+
+                    // Pre-load the granular permissions the sharee currently has
+                    const permWrite = clone.querySelector("input.perm-write");
+                    const permCreate = clone.querySelector("input.perm-create");
+                    const permDelete = clone.querySelector("input.perm-delete");
+                    permWrite.checked = !!element.canWrite;
+                    permCreate.checked = !!element.canCreate;
+                    permDelete.checked = !!element.canDelete;
+
+                    // Saving reuses the owner's share_add endpoint (upsert by principal)
+                    const saveButton = clone.querySelector("a.save");
+                    saveButton.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        const cw = permWrite.checked ? 'true' : 'false';
+                        const cc = permCreate.checked ? 'true' : 'false';
+                        const cd = permDelete.checked ? 'true' : 'false';
+                        window.location = targetUrl + "?principalId=" + element.principalId + "&canWrite=" + cw + "&canCreate=" + cc + "&canDelete=" + cd;
+                    });
+
+                    clone.querySelector("a.revoke").href = element.revokeUrl;
 
                     shares.appendChild(clone);
                 });

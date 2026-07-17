@@ -8,12 +8,31 @@
       <div class="modal-body">
         <h4>{{ "calendars.delegates.existing"|trans }}</h4>
         <template id="shareModal-shareeTemplate">
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <span class="name"></span>
-                    <span class="badge bg-info rounded-pill ms-2"></span>
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="name"></span>
+                        <span class="badge bg-info rounded-pill ms-2"></span>
+                    </div>
+                    <div class="text-nowrap">
+                        <a href="#" class="btn btn-sm btn-primary save">{{ "save"|trans }}</a>
+                        <a href="#" class="btn btn-sm btn-danger revoke ms-1">{{ "revoke"|trans }}</a>
+                    </div>
                 </div>
-                <a href="#" class="btn btn-sm btn-danger revoke">{{ "revoke"|trans }}</a>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input perm-write" type="checkbox" role="switch">
+                        <label class="form-check-label">✏️ {{ "sharing.perm.write"|trans }}</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input perm-create" type="checkbox" role="switch">
+                        <label class="form-check-label">➕ {{ "sharing.perm.create"|trans }}</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input perm-delete" type="checkbox" role="switch">
+                        <label class="form-check-label">🗑️ {{ "sharing.perm.delete"|trans }}</label>
+                    </div>
+                </div>
             </div>
         </template>
         <span class="d-none" id="shareModal-none"><em>{{ "calendars.delegates.none"|trans }}</em></span>

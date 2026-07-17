@@ -201,6 +201,7 @@ class AddressBookController extends AbstractController
             }
             $principal = $doctrine->getRepository(Principal::class)->findOneByUri($instance->getPrincipalUri());
             $response[] = [
+                'principalId' => $principal ? $principal->getId() : null,
                 'principalUri' => $instance->getPrincipalUri(),
                 'displayName' => $principal ? $principal->getDisplayName() : $instance->getPrincipalUri(),
                 'email' => $principal ? $principal->getEmail() : '',

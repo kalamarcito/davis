@@ -36,8 +36,8 @@ class CalendarInstanceRepository extends ServiceEntityRepository
             ->setParameter('ownerAccess', CalendarInstance::getOwnerAccesses());
 
         if ($withCalendar) {
-            // Returns CalendarInstances as arrays, with displayName and email of the owner
-            return $query->addSelect('p.displayName', 'p.email')
+            // Returns CalendarInstances as arrays, with id, displayName and email of the sharee principal
+            return $query->addSelect('p.displayName', 'p.email', 'p.id AS principalId')
                 ->getQuery()
                 ->getArrayResult();
         }
