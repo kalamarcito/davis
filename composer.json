@@ -14,7 +14,7 @@
         "doctrine/doctrine-bundle": "^2.15.1",
         "doctrine/doctrine-migrations-bundle": "^3.4.2",
         "doctrine/orm": "^2.20.6",
-        "sabre/dav": "@dev",
+        "sabre/dav": "dev-feat/carddav-sharing",
         "symfony/apache-pack": "^1.0.1",
         "symfony/asset": "^7.4",
         "symfony/console": "^7.4",
@@ -71,7 +71,8 @@
             "composer/package-versions-deprecated": true,
             "symfony/flex": true,
             "symfony/runtime": true
-        }
+        },
+        "use-github-api": false
     },
     "autoload": {
         "psr-4": {
