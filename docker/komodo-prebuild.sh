@@ -26,6 +26,26 @@ fi
 CACHE_DIR="${DAVIS_BUILD_CACHE:-/root/davis-build-cache}"
 TAR="$CACHE_DIR/vendor.tar"
 RESTORE="$CACHE_DIR/restore-vendor.sh"
+LOCKSHA="$CACHE_DIR/vendor.lock.sha256"
+
+# Auto-invalidate: never restore a vendor cache built for a different
+# composer.lock (that would silently ship stale dependencies — e.g. an old
+# sabre/dav fork). Refuse loudly and point at the refresh script instead.
+if [ -f "$LOCKSHA" ] && [ -f "$STACK/composer.lock" ] && command -v sha256sum >/dev/null 2>&1; then
+  cur=$(sha256sum "$STACK/composer.lock" | awk '{print $1}')
+  want=$(cat "$LOCKSHA")
+  if [ "$cur" != "$want" ]; then
+    echo "komodo-prebuild: ERROR — vendor cache is STALE" >&2
+    echo "  composer.lock changed since the cache was built:" >&2
+    echo "    cache built for lock : $want" >&2
+    echo "    current composer.lock: $cur" >&2
+    echo "  Refresh the cache before building (on a host that can reach the deps):" >&2
+    echo "    # regenerate \$STACK/vendor for the new lock, then:" >&2
+    echo "    sh $CACHE_DIR/refresh-vendor-cache.sh $STACK" >&2
+    exit 1
+  fi
+  echo "komodo-prebuild: vendor cache matches composer.lock ($cur)"
+fi
 
 if [ -x "$RESTORE" ]; then
   exec "$RESTORE" "$STACK"
@@ -43,4 +63,5 @@ echo "komodo-prebuild: ERROR — no vendor/ and no cache at $TAR" >&2
 echo "Create once (from a machine with working Packagist egress):" >&2
 echo "  cd $STACK && composer install --no-dev --optimize-autoloader" >&2
 echo "  mkdir -p $CACHE_DIR && tar -C $STACK -cf $TAR vendor" >&2
+echo "  sha256sum $STACK/composer.lock | awk '{print \$1}' > $CACHE_DIR/vendor.lock.sha256" >&2
 exit 1
