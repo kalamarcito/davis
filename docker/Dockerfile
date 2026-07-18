@@ -1,4 +1,6 @@
-# syntax=docker/dockerfile:1
+# NOTE: Do NOT add `# syntax=docker/dockerfile:1` here.
+# That pulls a BuildKit frontend from docker.io on every build; on hosts with
+# broken egress (AirVPN / filtered GitHub) the build dies before the first RUN.
 
 # Initial PHP image is available here:
 # https://github.com/docker-library/php/blob/master/8.2/alpine3.18/fpm/Dockerfile#L33
@@ -84,11 +86,10 @@ COPY --from=extension-builder /usr/local/lib/php/extensions /usr/local/lib/php/e
 # This is for Hadolint
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-# PHP-FPM healthcheck
+# PHP-FPM healthcheck (vendored — do not curl raw.githubusercontent.com at build time)
 RUN set -xe && echo "pm.status_path = /status" >> /usr/local/etc/php-fpm.d/zz-docker.conf
-RUN curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/v0.5.0/php-fpm-healthcheck \
-    -o /usr/local/bin/php-fpm-healthcheck -s \
-    && chmod +x /usr/local/bin/php-fpm-healthcheck
+COPY docker/php-fpm-healthcheck /usr/local/bin/php-fpm-healthcheck
+RUN chmod +x /usr/local/bin/php-fpm-healthcheck
 
 # Davis installation.
 #
@@ -103,25 +104,33 @@ WORKDIR /opt/davis
 # Composer binary from the official image (avoids getcomposer.org during build —
 # that host often times out behind AirVPN / broken egress).
 #
-# sabre/dav is resolved from GitLab (nas.kalamar.lan:8929). Other packages still
-# need Packagist/GitHub unless vendor/ is already present in the build context
-# (offline path: rsync vendor/ from a machine with working egress, then build).
+# Offline / Komodo path (davis.kalamar.lan):
+#   vendor/ is gitignored; a clean clone has no vendor → composer install hits
+#   Packagist/GitHub and dies (exit 100). Restore before build:
+#     /root/davis-build-cache/restore-vendor.sh
+#   The host docker-compose wrapper does this automatically for /etc/komodo/*
+#   stacks. Prefer dump-autoload when vendor/ is already in the build context.
 #
-# Optional private GitLab auth:
+# Optional private GitLab auth (online installs only):
 #   COMPOSER_AUTH={"http-basic":{"nas.kalamar.lan:8929":{"username":"oauth2","password":"glpat-XXX"}}}
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN apk --no-progress add --no-cache git
 ARG COMPOSER_AUTH=
 ENV COMPOSER_AUTH=${COMPOSER_AUTH}
 # Prefer-dist only — prefer-source fallback burns hours of timeouts when
-# github.com is unreachable (each package waits ~2 min). If vendor/ is already
-# in the context, skip network install entirely.
+# github.com is unreachable (each package waits ~2 min).
 RUN set -eux; \
     if [ -f vendor/autoload.php ]; then \
       echo "Using pre-supplied vendor/ (offline build)"; \
       APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --no-dev --optimize --classmap-authoritative; \
     else \
-      APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader; \
+      echo "WARNING: vendor/ missing from build context — trying online composer install"; \
+      echo "If this fails with exit 100, restore vendor/ and rebuild."; \
+      echo "  On davis.kalamar.lan: /root/davis-build-cache/restore-vendor.sh"; \
+      APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
+        || { echo "ERROR: composer install failed (exit $?). Network to Packagist/GitHub blocked or private VCS auth missing (COMPOSER_AUTH)."; \
+             echo "Offline fix: put a complete vendor/ in the repo root build context, then rebuild."; \
+             exit 100; }; \
     fi; \
     php ./vendor/symfony/intl/Resources/bin/compress; \
     rm -rf /opt/davis/docker /.composer; \

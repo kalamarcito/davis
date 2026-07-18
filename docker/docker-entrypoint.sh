@@ -15,8 +15,13 @@ if [ -d /opt/davis ]; then
     cp -a /opt/davis/. /var/www/davis/
 fi
 
-# var/ (cache + logs) is written at runtime and must be owned by the fpm user.
-mkdir -p /var/www/davis/var
+# Drop Symfony/Doctrine caches left on the volume from previous images.
+# Stale prod metadata (e.g. missing repositoryClass) caused 500s after deploys
+# that only updated entities/repos without invalidating the volume cache.
+rm -rf /var/www/davis/var/cache/*
+mkdir -p /var/www/davis/var/cache /var/www/davis/var/log
+
+# var/ is written at runtime and must be owned by the fpm user.
 chown -R "${FPM_USER}" /var/www/davis/var
 
 # Drop root and hand off to the base php image entrypoint (which execs "$@").
