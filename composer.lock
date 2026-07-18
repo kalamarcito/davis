@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7591b16d27dd30f2426149953a65ef8c",
+    "content-hash": "abb18760a1d25482ffa3768f3b729718",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -2533,12 +2533,12 @@
             "version": "dev-feat/carddav-sharing",
             "source": {
                 "type": "git",
-                "url": "https://github.com/kalamarcito/dav",
+                "url": "http://nas.kalamar.lan:8929/kalamarcito/dav.git",
                 "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kalamarcito/dav/zipball/035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
+                "url": "http://nas.kalamar.lan:8929/api/v4/projects/kalamarcito%2Fdav/repository/archive.zip?sha=035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
                 "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
                 "shasum": ""
             },
@@ -6812,7 +6812,7 @@
             ],
             "authors": [
                 {
-                    "name": "Kévin Dunglas",
+                    "name": "K\u00e9vin Dunglas",
                     "email": "dunglas@gmail.com"
                 },
                 {
@@ -8523,7 +8523,7 @@
             ],
             "authors": [
                 {
-                    "name": "Kévin Dunglas",
+                    "name": "K\u00e9vin Dunglas",
                     "email": "dunglas@gmail.com"
                 },
                 {
@@ -8915,7 +8915,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering"
                 }
             ],
@@ -9394,7 +9394,7 @@
             ],
             "authors": [
                 {
-                    "name": "Andreas Möller",
+                    "name": "Andreas M\u00f6ller",
                     "email": "am@localheinz.com",
                     "homepage": "https://localheinz.com"
                 }
@@ -9444,7 +9444,7 @@
                     "email": "igor@wiedler.ch"
                 }
             ],
-            "description": "Événement is a very simple event dispatching library for PHP",
+            "description": "\u00c9v\u00e9nement is a very simple event dispatching library for PHP",
             "keywords": [
                 "event-dispatcher",
                 "event-emitter"
@@ -9495,7 +9495,7 @@
             ],
             "authors": [
                 {
-                    "name": "Théo FIDRY",
+                    "name": "Th\u00e9o FIDRY",
                     "email": "theo.fidry@gmail.com"
                 }
             ],
@@ -9598,7 +9598,7 @@
                     "email": "fabien@symfony.com"
                 },
                 {
-                    "name": "Dariusz Rumiński",
+                    "name": "Dariusz Rumi\u0144ski",
                     "email": "dariusz.ruminski@gmail.com"
                 }
             ],
@@ -10387,7 +10387,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10463,7 +10463,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10538,7 +10538,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10612,7 +10612,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10690,7 +10690,7 @@
                     "homepage": "https://sorgalla.com/"
                 },
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10762,7 +10762,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -10837,7 +10837,7 @@
             ],
             "authors": [
                 {
-                    "name": "Christian Lück",
+                    "name": "Christian L\u00fcck",
                     "email": "christian@clue.engineering",
                     "homepage": "https://clue.engineering/"
                 },
@@ -11942,7 +11942,7 @@
                     "email": "fabien@symfony.com"
                 },
                 {
-                    "name": "Jean-François Simon",
+                    "name": "Jean-Fran\u00e7ois Simon",
                     "email": "jeanfrancois.simon@sensiolabs.com"
                 },
                 {
@@ -12542,7 +12542,7 @@
         "ext-zip": "*",
         "composer-runtime-api": "^2"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.2.15"
     },

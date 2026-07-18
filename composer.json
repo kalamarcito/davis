@@ -56,7 +56,8 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/kalamarcito/dav"
+            "url": "http://nas.kalamar.lan:8929/kalamarcito/dav.git",
+            "canonical": true
         }
     ],
     "config": {
@@ -65,6 +66,12 @@
             "*": "dist"
         },
         "sort-packages": true,
+        "secure-http": false,
+        "gitlab-domains": [
+            "nas.kalamar.lan",
+            "nas.kalamar.lan:8929"
+        ],
+        "gitlab-protocol": "http",
         "platform": {
             "php": "8.2.15"
         },

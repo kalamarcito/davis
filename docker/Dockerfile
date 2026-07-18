@@ -103,12 +103,20 @@ WORKDIR /opt/davis
 # Composer binary from the official image (avoids getcomposer.org during build —
 # that host often times out behind AirVPN / broken egress). git is still needed
 # so composer can clone the sabre/dav fork when dist zipballs 404.
+#
+# sabre/dav is resolved from GitLab (nas.kalamar.lan:8929). If that project is
+# private, pass credentials into the build, e.g. Komodo build arg:
+#   COMPOSER_AUTH={"http-basic":{"nas.kalamar.lan:8929":{"username":"oauth2","password":"glpat-XXX"}}}
+# (GitLab PAT as password; username oauth2 is the usual HTTP clone form.)
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN apk --no-progress add --no-cache git
+ARG COMPOSER_AUTH=
+ENV COMPOSER_AUTH=${COMPOSER_AUTH}
 RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
     || APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-source --optimize-autoloader \
     && php ./vendor/symfony/intl/Resources/bin/compress \
-    && rm -rf /opt/davis/docker /.composer
+    && rm -rf /opt/davis/docker /.composer \
+    && unset COMPOSER_AUTH
 
 # su-exec lets the entrypoint drop from root to $FPM_USER (added here, in the
 # final stage, so it does not invalidate the cached extension build above).
