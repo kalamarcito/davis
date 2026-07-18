@@ -263,7 +263,7 @@ final class DavisIMipPlugin extends SabreBaseIMipPlugin
      *
      * @return array
      */
-    public function getPluginInfo()
+    public function getPluginInfo(): array
     {
         return [
             'name' => $this->getPluginName(),

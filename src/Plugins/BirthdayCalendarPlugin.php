@@ -25,7 +25,7 @@ class BirthdayCalendarPlugin extends DAV\ServerPlugin
         $this->birthdayService->setBackend($calendarBackend);
     }
 
-    public function initialize(DAV\Server $server)
+    public function initialize(DAV\Server $server): void
     {
         $this->server = $server;
 
