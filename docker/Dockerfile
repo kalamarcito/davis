@@ -100,11 +100,11 @@ RUN curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/v0.5.0
 COPY --chown=${FPM_USER} . /opt/davis
 WORKDIR /opt/davis
 
-# Install Composer 2, then dependencies, compress the rather big INTL package, and then cleanup (only useful when using --squash).
-# git is required so composer can fall back to cloning sabre/dav (private fork / codeload lag)
-# when --prefer-dist zipballs 404.
-RUN apk --no-progress add --no-cache git \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Composer binary from the official image (avoids getcomposer.org during build —
+# that host often times out behind AirVPN / broken egress). git is still needed
+# so composer can clone the sabre/dav fork when dist zipballs 404.
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+RUN apk --no-progress add --no-cache git
 RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
     || APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-source --optimize-autoloader \
     && php ./vendor/symfony/intl/Resources/bin/compress \
