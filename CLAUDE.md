@@ -83,6 +83,22 @@ All DAV traffic enters through `DAVController` (`src/Controller/DAVController.ph
 - Translations: both `calendar.share_access.{2,3}` and `addressbook.share_access.{2,3}` (2=readonly, 3=read/write).
 - **LDAP group sync is not implemented yet** (phase 2).
 
+### CardDAV client quirks (share permissions)
+
+- **Thunderbird** — native CardDAV **and** the **CardBook** add-on — treats a
+  shared address book as **binary readonly/read-write** and ignores granular
+  privileges. Given *any* write privilege (even just `create`), it marks the
+  whole book editable and goes **optimistic** on every operation; the server then
+  denies (403) the ones without a granular privilege and TB keeps the stale local
+  state until you remove and re-add the book. Practical rule: with Thunderbird,
+  share **readonly or full read-write**, never partial.
+- A share with **zero** write privileges (pure readonly) works fine in TB — it
+  reflects server changes on sync without re-adding.
+- **Evolution** reads the granular `current-user-privilege-set` and honours each
+  bit; it reflects permission changes as soon as the CardDAV account is reloaded.
+- The server is correct either way: it advertises exactly the granular privileges
+  and persists only permitted edits (verified end-to-end with curl).
+
 ### Authentication
 
 Three auth methods for DAV clients, selected via `AUTH_METHOD` env var:
