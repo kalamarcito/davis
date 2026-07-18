@@ -100,11 +100,15 @@ RUN curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/v0.5.0
 COPY --chown=${FPM_USER} . /opt/davis
 WORKDIR /opt/davis
 
-# Install Composer 2, then dependencies, compress the rather big INTL package, and then cleanup (only useful when using --squash)
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer 2, then dependencies, compress the rather big INTL package, and then cleanup (only useful when using --squash).
+# git is required so composer can fall back to cloning sabre/dav (private fork / codeload lag)
+# when --prefer-dist zipballs 404.
+RUN apk --no-progress add --no-cache git \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
+    || APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-source --optimize-autoloader \
     && php ./vendor/symfony/intl/Resources/bin/compress \
-    && rm -rf /opt/davis/docker
+    && rm -rf /opt/davis/docker /.composer
 
 # su-exec lets the entrypoint drop from root to $FPM_USER (added here, in the
 # final stage, so it does not invalidate the cached extension build above).
