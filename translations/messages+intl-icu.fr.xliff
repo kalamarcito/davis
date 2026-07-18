@@ -589,6 +589,14 @@
         <source>calendar.share_access.3</source>
         <target>lecture / écriture</target>
       </trans-unit>
+      <trans-unit id="ab_share_access_2" resname="addressbook.share_access.2">
+        <source>addressbook.share_access.2</source>
+        <target>lecture seule</target>
+      </trans-unit>
+      <trans-unit id="ab_share_access_3" resname="addressbook.share_access.3">
+        <source>addressbook.share_access.3</source>
+        <target>lecture / écriture</target>
+      </trans-unit>
       <trans-unit id="F8h2YaT" resname="calendar.share_access.10">
         <source>calendar.share_access.10</source>
         <target>public</target>
