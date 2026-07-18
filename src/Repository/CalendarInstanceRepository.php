@@ -63,6 +63,29 @@ class CalendarInstanceRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Shared (non-owner) instances whose principaluri is one of the given URIs
+     * (typically group principals the user belongs to).
+     *
+     * @param string[] $principalUris
+     *
+     * @return CalendarInstance[]
+     */
+    public function findSharedByPrincipalUris(array $principalUris): array
+    {
+        if ([] === $principalUris) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.principalUri IN (:uris)')
+            ->andWhere('c.access NOT IN (:ownerAccess)')
+            ->setParameter('uris', $principalUris)
+            ->setParameter('ownerAccess', CalendarInstance::getOwnerAccesses())
+            ->getQuery()
+            ->getResult();
+    }
+
     public function hasDifferentOwner(int $calendarId, string $principalUri): bool
     {
         return $this->createQueryBuilder('c')

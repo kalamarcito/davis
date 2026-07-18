@@ -75,6 +75,7 @@
     {% for compoundObject in shared %}
         {% set calendar = compoundObject.entity %}
         {% set davUri = compoundObject.uri %}
+        {% set viaGroup = compoundObject.viaGroup|default(null) %}
         <div class="list-group-item p-3">
             <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1 me-auto">
@@ -84,10 +85,14 @@
                     {% else %}
                         <span class="badge bg-info ms-1">{{ ('calendar.share_access.' ~ calendar.access)|trans }}</span>
                     {% endif %}
+                    {% if viaGroup %}
+                        <span class="badge bg-secondary ms-1">👥 {{ "sharing.via_group"|trans({'name': viaGroup.displayName}) }}</span>
+                    {% endif %}
                     <a href="#" tabindex="0" class="badge badge-indicator ms-1" role="button" data-bs-toggle="popover" data-bs-title="{{ 'calendars.setup.title'|trans }}" data-bs-html='true' data-bs-content="URI: <code>{{ calendar.uri }}</code><br />Absolute path: <code>{{ davUri }}</code>">ⓘ</a>
                     <span class="badge badge-indicator" style="background-color: {{ calendar.calendarColor }}">&nbsp;</span>
                 </h5>
                 <div class="me-0 text-right d-md-block d-none">
+                    {% if not viaGroup %}
                     <a href="{{ path('calendar_edit',{userId: userId, id: calendar.id})}}" class="btn btn-sm btn-outline-primary ms-1">✎ {{ "edit"|trans }}</a>
                     <a href="#"
                         data-bs-toggle="modal" data-bs-target="#deleteModal-revoke"
@@ -95,6 +100,9 @@
                         data-flavour="revoke"
                         class="btn btn-sm btn-outline-danger ms-1"
                     >🚫 {{ "revoke"|trans }}</a>
+                    {% else %}
+                    <span class="text-muted small">{{ "sharing.via_group.hint"|trans }}</span>
+                    {% endif %}
                 </div>
             </div>
             <p class="mb-1">{{ calendar.description }}</p>
@@ -105,6 +113,7 @@
             {% endif %}
             — {{ "calendars.entries"|trans({'%count%': calendar.calendar.objects|length}) }}
             </small>
+            {% if not viaGroup %}
             <div class="btn-group btn-group-sm mt-3 d-flex d-md-none" role="group">
                 <a href="{{ path('calendar_edit',{userId: userId, id: calendar.id})}}" class="btn btn-outline-primary">✎ {{ "edit"|trans }}</a>
                 <a href="#" 
@@ -114,6 +123,7 @@
                     class="btn btn-outline-danger"
                 >🚫 {{ "revoke"|trans }}</a>
             </div>
+            {% endif %}
         </div>
     {% endfor %}
     </div>

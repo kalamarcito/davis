@@ -7,7 +7,7 @@ use Sabre\DAV\Sharing\Plugin as SharingPlugin;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity()]
+#[ORM\Entity(repositoryClass: "App\Repository\AddressBookInstanceRepository")]
 #[ORM\Table(name: 'addressbookinstances')]
 #[UniqueEntity(fields: ['principalUri', 'uri'], errorPath: 'uri', message: 'form.uri.unique')]
 class AddressBookInstance

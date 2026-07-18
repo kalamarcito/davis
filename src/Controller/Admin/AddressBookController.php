@@ -33,16 +33,44 @@ class AddressBookController extends AbstractController
         $principalUri = Principal::PREFIX.$user->getUsername();
 
         $principal = $doctrine->getRepository(Principal::class)->findOneByUri($principalUri);
-        $allInstances = $doctrine->getRepository(AddressBookInstance::class)->findByPrincipalUri($principalUri);
+        $allInstances = $doctrine->getRepository(AddressBookInstance::class)->findBy(['principalUri' => $principalUri]);
 
         $owned = [];
         $shared = [];
+        $directBookIds = [];
         foreach ($allInstances as $instance) {
             if ($instance->isShared()) {
-                $shared[] = $instance;
+                $bookId = $instance->getAddressBook()?->getId();
+                if (null !== $bookId) {
+                    $directBookIds[$bookId] = true;
+                }
+                $shared[] = [
+                    'entity' => $instance,
+                    'viaGroup' => null,
+                ];
             } else {
                 $owned[] = $instance;
             }
+        }
+
+        // Shares addressed to groups this user belongs to (same as CardDAV discovery)
+        $groups = $doctrine->getRepository(Principal::class)->findGroupsOfMemberUri($principalUri);
+        $groupsByUri = [];
+        foreach ($groups as $group) {
+            $groupsByUri[$group->getUri()] = $group;
+        }
+        $viaGroupInstances = $doctrine->getRepository(AddressBookInstance::class)
+            ->findSharedByPrincipalUris(array_keys($groupsByUri));
+        foreach ($viaGroupInstances as $instance) {
+            $bookId = $instance->getAddressBook()?->getId();
+            // Prefer a direct user share of the same address book in the list
+            if (null !== $bookId && isset($directBookIds[$bookId])) {
+                continue;
+            }
+            $shared[] = [
+                'entity' => $instance,
+                'viaGroup' => $groupsByUri[$instance->getPrincipalUri()] ?? null,
+            ];
         }
 
         $allPrincipals = $doctrine->getRepository(Principal::class)->findShareTargets($principalUri);

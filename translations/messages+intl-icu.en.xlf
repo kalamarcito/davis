@@ -597,6 +597,14 @@
         <source>addressbook.share_access.3</source>
         <target>read / write</target>
       </trans-unit>
+      <trans-unit id="sharing_via_group" resname="sharing.via_group">
+        <source>sharing.via_group</source>
+        <target>via group {name}</target>
+      </trans-unit>
+      <trans-unit id="sharing_via_group_hint" resname="sharing.via_group.hint">
+        <source>sharing.via_group.hint</source>
+        <target>Managed via group membership (not a personal share)</target>
+      </trans-unit>
       <trans-unit id="F8h2YaT" resname="calendar.public">
         <source>calendar.public</source>
         <target>public</target>

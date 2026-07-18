@@ -34,7 +34,7 @@ class CalendarController extends AbstractController
         $principalUri = Principal::PREFIX.$username;
 
         $principal = $doctrine->getRepository(Principal::class)->findOneByUri($principalUri);
-        $allCalendars = $doctrine->getRepository(CalendarInstance::class)->findByPrincipalUri($principalUri);
+        $allCalendars = $doctrine->getRepository(CalendarInstance::class)->findBy(['principalUri' => $principalUri]);
 
         $subscriptions = $doctrine->getRepository(CalendarSubscription::class)->findByPrincipalUri($principalUri);
 
@@ -42,23 +42,51 @@ class CalendarController extends AbstractController
         $calendars = [];
         $shared = [];
         $auto = [];
+        $directCalendarIds = [];
         foreach ($allCalendars as $calendar) {
             if ($calendar->isAutomaticallyGenerated()) {
                 $auto[] = [
                     'entity' => $calendar,
                     'uri' => $router->generate('dav', ['path' => 'calendars/'.$username.'/'.$calendar->getUri()], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'viaGroup' => null,
                 ];
             } elseif (!$calendar->isShared()) {
                 $calendars[] = [
                     'entity' => $calendar,
                     'uri' => $router->generate('dav', ['path' => 'calendars/'.$username.'/'.$calendar->getUri()], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'viaGroup' => null,
                 ];
             } else {
+                $calId = $calendar->getCalendar()?->getId();
+                if (null !== $calId) {
+                    $directCalendarIds[$calId] = true;
+                }
                 $shared[] = [
                     'entity' => $calendar,
                     'uri' => $router->generate('dav', ['path' => 'calendars/'.$username.'/'.$calendar->getUri()], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'viaGroup' => null,
                 ];
             }
+        }
+
+        // Shares to groups this user belongs to (same discovery as CalDAV)
+        $groups = $doctrine->getRepository(Principal::class)->findGroupsOfMemberUri($principalUri);
+        $groupsByUri = [];
+        foreach ($groups as $group) {
+            $groupsByUri[$group->getUri()] = $group;
+        }
+        $viaGroupInstances = $doctrine->getRepository(CalendarInstance::class)
+            ->findSharedByPrincipalUris(array_keys($groupsByUri));
+        foreach ($viaGroupInstances as $calendar) {
+            $calId = $calendar->getCalendar()?->getId();
+            if (null !== $calId && isset($directCalendarIds[$calId])) {
+                continue;
+            }
+            $shared[] = [
+                'entity' => $calendar,
+                'uri' => $router->generate('dav', ['path' => 'calendars/'.$username.'/'.$calendar->getUri()], UrlGeneratorInterface::ABSOLUTE_URL),
+                'viaGroup' => $groupsByUri[$calendar->getPrincipalUri()] ?? null,
+            ];
         }
 
         // Users + groups as share targets

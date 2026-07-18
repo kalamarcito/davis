@@ -53,18 +53,24 @@
     <h2 class="h4 mt-5 fw-lighter">{{ "addressbooks.shared.with"|trans({'who': principal.displayName}) }}</h2>
 
     <div class="list-group mt-3">
-    {% for addressbook_instance in shared_instances %}
+    {% for row in shared_instances %}
+        {% set addressbook_instance = row.entity %}
+        {% set viaGroup = row.viaGroup %}
         <div class="list-group-item p-3">
             <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1 me-auto">
                     {{ addressbook_instance.displayName }}
                     {% if addressbook_instance.access == 2 %}
-                        <span class="badge bg-info ms-1">Read Only</span>
+                        <span class="badge bg-info ms-1">{{ "addressbook.share_access.2"|trans }}</span>
                     {% elseif addressbook_instance.access == 3 %}
-                        <span class="badge bg-success ms-1">Read/Write</span>
+                        <span class="badge bg-success ms-1">{{ "addressbook.share_access.3"|trans }}</span>
+                    {% endif %}
+                    {% if viaGroup %}
+                        <span class="badge bg-secondary ms-1">👥 {{ "sharing.via_group"|trans({'name': viaGroup.displayName}) }}</span>
                     {% endif %}
                 </h5>
                 <div class="me-0 text-right d-md-block d-none">
+                    {% if not viaGroup %}
                     <a href="{{ path('addressbook_edit',{userId: userId, id: addressbook_instance.id})}}" class="btn btn-sm btn-outline-primary ms-1">✎ {{ "edit"|trans }}</a>
                     <a href="#"
                         data-bs-toggle="modal" data-bs-target="#deleteModal-revoke"
@@ -72,10 +78,14 @@
                         data-flavour="revoke"
                         class="btn btn-sm btn-outline-danger ms-1"
                     >🚫 {{ "revoke"|trans }}</a>
+                    {% else %}
+                    <span class="text-muted small">{{ "sharing.via_group.hint"|trans }}</span>
+                    {% endif %}
                 </div>
             </div>
             <p class="mb-1">{{ addressbook_instance.description }}</p>
             <small>{{ "addressbooks.uri"|trans }} : <code>{{ addressbook_instance.uri }}</code> — {{ "addressbooks.contacts"|trans({'%count%': addressbook_instance.addressBook.cards|length}) }}</small>
+            {% if not viaGroup %}
             <div class="btn-group btn-group-sm mt-3 d-flex d-md-none" role="group">
                 <a href="{{ path('addressbook_edit',{userId: userId, id: addressbook_instance.id})}}" class="btn btn-outline-primary">✎ {{ "edit"|trans }}</a>
                 <a href="#"
@@ -85,6 +95,7 @@
                     class="btn btn-outline-danger"
                 >🚫 {{ "revoke"|trans }}</a>
             </div>
+            {% endif %}
         </div>
     {% endfor %}
     </div>

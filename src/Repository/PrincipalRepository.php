@@ -63,6 +63,23 @@ class PrincipalRepository extends ServiceEntityRepository
     }
 
     /**
+     * Groups that list $memberUri in groupmembers (same as DAV membership).
+     *
+     * @return Principal[]
+     */
+    public function findGroupsOfMemberUri(string $memberUri): array
+    {
+        return $this->createQueryBuilder('g')
+            ->innerJoin('g.delegees', 'm')
+            ->andWhere('g.isGroup = true')
+            ->andWhere('m.uri = :uri')
+            ->setParameter('uri', $memberUri)
+            ->orderBy('g.displayName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Main user principals only (for adding as group members).
      *
      * @return Principal[]
