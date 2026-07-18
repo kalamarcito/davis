@@ -2534,12 +2534,12 @@
             "source": {
                 "type": "git",
                 "url": "http://nas.kalamar.lan:8929/kalamarcito/dav.git",
-                "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8"
+                "reference": "77de6a1e6d5f4590dc6e067992932487c1c0e1e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "http://nas.kalamar.lan:8929/api/v4/projects/kalamarcito%2Fdav/repository/archive.zip?sha=035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
-                "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
+                "url": "http://nas.kalamar.lan:8929/api/v4/projects/kalamarcito%2Fdav/repository/archive.zip?sha=77de6a1e6d5f4590dc6e067992932487c1c0e1e2",
+                "reference": "77de6a1e6d5f4590dc6e067992932487c1c0e1e2",
                 "shasum": ""
             },
             "require": {

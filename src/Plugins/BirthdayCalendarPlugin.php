@@ -79,7 +79,7 @@ class BirthdayCalendarPlugin extends DAV\ServerPlugin
             return;
         }
 
-        $addressBookId = $parentNode->getProperties(['id'])['id'];
+        $addressBookId = $this->extractAddressBookId($parentNode);
 
         $this->birthdayService->onCardDeleted($addressBookId, basename($path));
     }
@@ -87,10 +87,22 @@ class BirthdayCalendarPlugin extends DAV\ServerPlugin
     private function handleCardChange(string $path, CardDAV\AddressBook $parentNode): void
     {
         $cardUri = basename($path);
-        $addressBookId = $parentNode->getProperties(['id'])['id'];
+        $addressBookId = $this->extractAddressBookId($parentNode);
         $cardNode = $this->server->tree->getNodeForPath($path);
 
         $this->birthdayService->onCardChanged($addressBookId, $cardUri, $cardNode->get());
+    }
+
+    /**
+     * The address book "id" property is [addressBookId, instanceId] once shared
+     * instances exist (sabre's shared-collection model). The birthday service
+     * operates on the address book row, so return that first element as int.
+     */
+    private function extractAddressBookId(CardDAV\AddressBook $addressBook): int
+    {
+        $id = $addressBook->getProperties(['id'])['id'];
+
+        return (int) (is_array($id) ? $id[0] : $id);
     }
 
     public function getPluginName(): string
