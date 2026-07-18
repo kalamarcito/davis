@@ -101,22 +101,31 @@ COPY --chown=${FPM_USER} . /opt/davis
 WORKDIR /opt/davis
 
 # Composer binary from the official image (avoids getcomposer.org during build —
-# that host often times out behind AirVPN / broken egress). git is still needed
-# so composer can clone the sabre/dav fork when dist zipballs 404.
+# that host often times out behind AirVPN / broken egress).
 #
-# sabre/dav is resolved from GitLab (nas.kalamar.lan:8929). If that project is
-# private, pass credentials into the build, e.g. Komodo build arg:
+# sabre/dav is resolved from GitLab (nas.kalamar.lan:8929). Other packages still
+# need Packagist/GitHub unless vendor/ is already present in the build context
+# (offline path: rsync vendor/ from a machine with working egress, then build).
+#
+# Optional private GitLab auth:
 #   COMPOSER_AUTH={"http-basic":{"nas.kalamar.lan:8929":{"username":"oauth2","password":"glpat-XXX"}}}
-# (GitLab PAT as password; username oauth2 is the usual HTTP clone form.)
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN apk --no-progress add --no-cache git
 ARG COMPOSER_AUTH=
 ENV COMPOSER_AUTH=${COMPOSER_AUTH}
-RUN APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader \
-    || APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-source --optimize-autoloader \
-    && php ./vendor/symfony/intl/Resources/bin/compress \
-    && rm -rf /opt/davis/docker /.composer \
-    && unset COMPOSER_AUTH
+# Prefer-dist only — prefer-source fallback burns hours of timeouts when
+# github.com is unreachable (each package waits ~2 min). If vendor/ is already
+# in the context, skip network install entirely.
+RUN set -eux; \
+    if [ -f vendor/autoload.php ]; then \
+      echo "Using pre-supplied vendor/ (offline build)"; \
+      APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --no-dev --optimize --classmap-authoritative; \
+    else \
+      APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 composer install --no-ansi --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader; \
+    fi; \
+    php ./vendor/symfony/intl/Resources/bin/compress; \
+    rm -rf /opt/davis/docker /.composer; \
+    unset COMPOSER_AUTH
 
 # su-exec lets the entrypoint drop from root to $FPM_USER (added here, in the
 # final stage, so it does not invalidate the cached extension build above).
