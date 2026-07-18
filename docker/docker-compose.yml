@@ -58,8 +58,12 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Fixed volume names so data survives container renames / redeploys
+  # Fixed + external: compose reuses the existing named volumes regardless of
+  # project renames (davis vs davis-docker). Create once if missing:
+  #   podman volume create davis_www && podman volume create database
   davis_www:
     name: davis_www
+    external: true
   database:
     name: database
+    external: true
