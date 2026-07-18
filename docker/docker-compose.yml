@@ -1,9 +1,10 @@
-# Project name is fixed so Komodo/podman-compose always manage the same set of
-# containers. Do NOT set container_name: below — global fixed names (mysql,
-# davis, nginx) survive a partial "down" and then block the next "up" with
-# "name is already in use". Service DNS (mysql / davis / nginx) still works
-# on the compose network without container_name.
-name: "davis-docker"
+# Project name MUST match the Komodo stack name ("davis"). If this differs
+# from what Komodo uses (directory/stack-derived name), you get TWO stacks
+# (e.g. davis-docker-* and davis-*) fighting over host port 9000.
+# Do NOT set container_name: below — global fixed names survive a partial
+# "down" and then block the next "up". Service DNS (mysql / davis) still
+# works on the compose network without container_name.
+name: "davis"
 
 services:
 
