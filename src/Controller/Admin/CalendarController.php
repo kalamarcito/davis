@@ -61,8 +61,8 @@ class CalendarController extends AbstractController
             }
         }
 
-        // We need all the other users so we can propose to share calendars with them
-        $allPrincipalsExcept = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal($principalUri);
+        // Users + groups as share targets
+        $allPrincipalsExcept = $doctrine->getRepository(Principal::class)->findShareTargets($principalUri);
 
         return $this->render('calendars/index.html.twig', [
             'calendars' => $calendars,
@@ -178,11 +178,18 @@ class CalendarController extends AbstractController
         $response = [];
         foreach ($instances as $instance) {
             $permissions = $instance[0]['permissions'];
+            $sharee = $doctrine->getRepository(Principal::class)->findOneByUri($instance[0]['principalUri']);
+            $isGroup = $sharee ? $sharee->isGroup() : false;
+            $displayName = $instance['displayName'] ?? ($sharee ? $sharee->getDisplayName() : $instance[0]['principalUri']);
+            if ($isGroup) {
+                $displayName = '👥 '.$displayName;
+            }
             $response[] = [
-                'principalId' => $instance['principalId'],
+                'principalId' => $instance['principalId'] ?? ($sharee ? $sharee->getId() : null),
                 'principalUri' => $instance[0]['principalUri'],
-                'displayName' => $instance['displayName'],
-                'email' => $instance['email'],
+                'displayName' => $displayName,
+                'email' => $instance['email'] ?? '',
+                'isGroup' => $isGroup,
                 'accessText' => $trans->trans('calendar.share_access.'.$instance[0]['access']),
                 'isWriteAccess' => SharingPlugin::ACCESS_READWRITE === $instance[0]['access'],
                 'canWrite' => (bool) ($permissions & 1),
@@ -246,10 +253,13 @@ class CalendarController extends AbstractController
             $existingSharedInstance->setAccess($access);
             $existingSharedInstance->setPermissions($permissions);
         } else {
+            // One instance per sharee principal — for groups that is the
+            // group principal itself; members discover it via sabre JOIN.
             $sharedInstance = new CalendarInstance();
             $sharedInstance->setTransparent(1)
                      ->setCalendar($instance->getCalendar())
-                     ->setShareHref('mailto:'.$newShareeToAdd->getEmail())
+                     ->setShareHref($newShareeToAdd->getShareHref())
+                     ->setShareDisplayName($newShareeToAdd->getDisplayName())
                      ->setDescription($instance->getDescription())
                      ->setDisplayName($instance->getDisplayName())
                      ->setCalendarColor($instance->getCalendarColor())

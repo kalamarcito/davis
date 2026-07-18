@@ -45,7 +45,7 @@ class AddressBookController extends AbstractController
             }
         }
 
-        $allPrincipals = $doctrine->getRepository(Principal::class)->findAllExceptPrincipal($principalUri);
+        $allPrincipals = $doctrine->getRepository(Principal::class)->findShareTargets($principalUri);
 
         return $this->render('addressbooks/index.html.twig', [
             'addressbook_instances' => $owned,
@@ -200,11 +200,17 @@ class AddressBookController extends AbstractController
                 continue;
             }
             $principal = $doctrine->getRepository(Principal::class)->findOneByUri($instance->getPrincipalUri());
+            $isGroup = $principal ? $principal->isGroup() : false;
+            $displayName = $principal ? $principal->getDisplayName() : $instance->getPrincipalUri();
+            if ($isGroup) {
+                $displayName = '👥 '.$displayName;
+            }
             $response[] = [
                 'principalId' => $principal ? $principal->getId() : null,
                 'principalUri' => $instance->getPrincipalUri(),
-                'displayName' => $principal ? $principal->getDisplayName() : $instance->getPrincipalUri(),
-                'email' => $principal ? $principal->getEmail() : '',
+                'displayName' => $displayName,
+                'email' => $principal ? ($principal->getEmail() ?? '') : '',
+                'isGroup' => $isGroup,
                 'accessText' => $trans->trans('addressbook.share_access.'.$instance->getAccess()),
                 'isWriteAccess' => SharingPlugin::ACCESS_READWRITE === $instance->getAccess(),
                 'canWrite' => $instance->canWrite(),
@@ -269,9 +275,11 @@ class AddressBookController extends AbstractController
             $existingSharedInstance->setAccess($access);
             $existingSharedInstance->setPermissions($permissions);
         } else {
+            // One instance per sharee principal (user or group).
             $sharedInstance = new AddressBookInstance();
             $sharedInstance->setAddressBook($instance->getAddressBook())
-                     ->setShareHref('mailto:'.$newShareeToAdd->getEmail())
+                     ->setShareHref($newShareeToAdd->getShareHref())
+                     ->setShareDisplayName($newShareeToAdd->getDisplayName())
                      ->setDescription($instance->getDescription())
                      ->setDisplayName($instance->getDisplayName())
                      ->setUri(UUIDUtil::getUUID())

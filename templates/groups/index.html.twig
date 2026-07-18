@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+{% set menu = 'groups' %}
+
+{% block body %}
+
+<h1 class="display-4 d-flex fw-lighter justify-content-between">
+  {{ "title.groups"|trans }}
+  <a href="{{ path('group_create') }}" class="btn btn-sm btn-success mb-auto mt-auto">+ {{ "groups.new"|trans }}</a>
+</h1>
+
+<div class="list-group mt-4">
+{% for group in groups %}
+    <div class="list-group-item p-3">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="me-auto">👥 {{ group.displayName }}</h5>
+            <div class="me-0 text-right d-lg-block d-none">
+                <a href="{{ path('group_members', {id: group.id}) }}" class="btn btn-sm btn-outline-secondary mb-1">{{ "groups.members"|trans }} ({{ group.delegees|length }})</a>
+                <a href="{{ path('group_edit', {id: group.id}) }}" class="btn btn-sm btn-outline-primary ms-1 mb-1">✎&nbsp;{{ "edit"|trans }}</a>
+                <a href="#"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal-groups"
+                    data-href="{{ path('group_delete', {id: group.id}) }}"
+                    class="btn btn-sm btn-outline-danger ms-1 mb-1"
+                    data-flavour="groups"
+                >⚠&nbsp;{{ "delete"|trans }}</a>
+            </div>
+        </div>
+        <p class="mb-1"><code>{{ group.uri }}</code>
+          {% if group.groupSource %}
+            — <span class="badge bg-secondary">{{ group.groupSource }}</span>
+          {% endif %}
+        </p>
+        <small>{{ "groups.member_count"|trans({'count': group.delegees|length}) }}</small>
+        <div class="btn-group btn-group-sm mt-3 d-flex d-lg-none" role="group">
+            <a href="{{ path('group_members', {id: group.id}) }}" class="btn btn-outline-secondary flex-fill">{{ "groups.members"|trans }}</a>
+            <a href="{{ path('group_edit', {id: group.id}) }}" class="btn btn-outline-primary flex-fill">{{ "edit"|trans }}</a>
+            <a href="#"
+                data-bs-toggle="modal" data-bs-target="#deleteModal-groups"
+                data-href="{{ path('group_delete', {id: group.id}) }}"
+                class="btn btn-outline-danger flex-fill"
+                data-flavour="groups"
+            >{{ "delete"|trans }}</a>
+        </div>
+    </div>
+{% else %}
+    <div class="my-5 py-5 d-flex justify-content-center align-items-center text-muted">{{ "groups.none"|trans }}</div>
+{% endfor %}
+</div>
+
+{% include '_partials/delete_modal.html.twig' with {flavour: 'groups'} %}
+
+{% endblock %}

@@ -625,6 +625,118 @@
         <source>sharing.perm.delete</source>
         <target>Delete items</target>
       </trans-unit>
+      <trans-unit id="title_groups" resname="title.groups">
+        <source>title.groups</source>
+        <target>Groups</target>
+      </trans-unit>
+      <trans-unit id="groups_new" resname="groups.new">
+        <source>groups.new</source>
+        <target>New group</target>
+      </trans-unit>
+      <trans-unit id="groups_edit" resname="groups.edit">
+        <source>groups.edit</source>
+        <target>Edit group {what}</target>
+      </trans-unit>
+      <trans-unit id="groups_back" resname="groups.back">
+        <source>groups.back</source>
+        <target>Back to Groups</target>
+      </trans-unit>
+      <trans-unit id="groups_name" resname="groups.name">
+        <source>groups.name</source>
+        <target>Display name</target>
+      </trans-unit>
+      <trans-unit id="groups_slug" resname="groups.slug">
+        <source>groups.slug</source>
+        <target>Slug</target>
+      </trans-unit>
+      <trans-unit id="groups_slug_help" resname="groups.slug.help">
+        <source>groups.slug.help</source>
+        <target>Lowercase letters, numbers and hyphens. Becomes the principal URI (cannot be changed later).</target>
+      </trans-unit>
+      <trans-unit id="groups_slug_immutable" resname="groups.slug.immutable">
+        <source>groups.slug.immutable</source>
+        <target>The slug cannot be changed after creation.</target>
+      </trans-unit>
+      <trans-unit id="groups_none" resname="groups.none">
+        <source>groups.none</source>
+        <target>No groups yet.</target>
+      </trans-unit>
+      <trans-unit id="groups_members" resname="groups.members">
+        <source>groups.members</source>
+        <target>Members</target>
+      </trans-unit>
+      <trans-unit id="groups_members_of" resname="groups.members_of">
+        <source>groups.members_of</source>
+        <target>Members of {what}</target>
+      </trans-unit>
+      <trans-unit id="groups_members_none" resname="groups.members_none">
+        <source>groups.members_none</source>
+        <target>This group has no members yet.</target>
+      </trans-unit>
+      <trans-unit id="groups_member_count" resname="groups.member_count">
+        <source>groups.member_count</source>
+        <target>{count, plural, =0 {No members} one {# member} other {# members}}</target>
+      </trans-unit>
+      <trans-unit id="groups_member_add" resname="groups.member_add">
+        <source>groups.member_add</source>
+        <target>Add member</target>
+      </trans-unit>
+      <trans-unit id="groups_member_remove" resname="groups.member_remove">
+        <source>groups.member_remove</source>
+        <target>Remove</target>
+      </trans-unit>
+      <trans-unit id="groups_member_pick" resname="groups.member_pick">
+        <source>groups.member_pick</source>
+        <target>User</target>
+      </trans-unit>
+      <trans-unit id="groups_member_added" resname="groups.member_added">
+        <source>groups.member_added</source>
+        <target>Member added to the group.</target>
+      </trans-unit>
+      <trans-unit id="groups_member_removed" resname="groups.member_removed">
+        <source>groups.member_removed</source>
+        <target>Member removed from the group.</target>
+      </trans-unit>
+      <trans-unit id="groups_created" resname="groups.created">
+        <source>groups.created</source>
+        <target>Group created.</target>
+      </trans-unit>
+      <trans-unit id="groups_saved" resname="groups.saved">
+        <source>groups.saved</source>
+        <target>Group saved.</target>
+      </trans-unit>
+      <trans-unit id="groups_deleted" resname="groups.deleted">
+        <source>groups.deleted</source>
+        <target>Group deleted and its shares revoked.</target>
+      </trans-unit>
+      <trans-unit id="groups_badge" resname="groups.badge">
+        <source>groups.badge</source>
+        <target>group</target>
+      </trans-unit>
+      <trans-unit id="groups_error_name" resname="groups.error.name_required">
+        <source>groups.error.name_required</source>
+        <target>Display name is required.</target>
+      </trans-unit>
+      <trans-unit id="groups_error_slug" resname="groups.error.slug_required">
+        <source>groups.error.slug_required</source>
+        <target>Slug is required.</target>
+      </trans-unit>
+      <trans-unit id="groups_error_slug_invalid" resname="groups.error.slug_invalid">
+        <source>groups.error.slug_invalid</source>
+        <target>Slug must be lowercase alphanumeric with optional hyphens.</target>
+      </trans-unit>
+      <trans-unit id="groups_error_slug_taken" resname="groups.error.slug_taken">
+        <source>groups.error.slug_taken</source>
+        <target>That group slug is already in use.</target>
+      </trans-unit>
+      <trans-unit id="groups_modal_title" resname="groups.modal.title">
+        <source>groups.modal.title</source>
+        <target>Delete this group?</target>
+      </trans-unit>
+      <trans-unit id="groups_modal_text" resname="groups.modal.text">
+        <source>groups.modal.text</source>
+        <target>This removes the group, its membership, and all calendars/address books shared with it. This cannot be undone.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

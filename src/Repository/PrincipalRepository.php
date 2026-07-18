@@ -34,6 +34,54 @@ class PrincipalRepository extends ServiceEntityRepository
     }
 
     /**
+     * Principals that can be share targets: main users + groups.
+     *
+     * @return Principal[]
+     */
+    public function findShareTargets(string $excludePrincipalUri): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('(p.isMain = true OR p.isGroup = true)')
+            ->andWhere('p.uri <> :val')
+            ->setParameter('val', $excludePrincipalUri)
+            ->orderBy('p.isGroup', 'DESC')
+            ->addOrderBy('p.displayName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Principal[]
+     */
+    public function findGroups(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.isGroup = true')
+            ->orderBy('p.displayName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Main user principals only (for adding as group members).
+     *
+     * @return Principal[]
+     */
+    public function findMainPrincipalsExcept(string ...$excludeUris): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('p.isMain = true')
+            ->orderBy('p.displayName', 'ASC');
+
+        if ($excludeUris) {
+            $qb->andWhere('p.uri NOT IN (:exclude)')
+                ->setParameter('exclude', $excludeUris);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return array<array{Principal, userId: int}>
      */
     public function findAllMainPrincipalsWithUserIds(): array

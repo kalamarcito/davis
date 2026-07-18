@@ -42,7 +42,9 @@
             <label for="member" class="col-form-label">{{ "calendars.delegates.member.add"|trans }}</label>
             <select class="form-control" id="shareModal-member" {% if principals|length == 0 %}disabled="disabled"{% endif %}>
               {% for principal in principals %}
-                <option value="{{ principal.id}}">{{ principal.displayName }} ({{ principal.email }})</option>
+                <option value="{{ principal.id}}">
+                  {% if principal.isGroup %}👥 {% endif %}{{ principal.displayName }}{% if principal.email %} ({{ principal.email }}){% elseif principal.isGroup %} ({{ "groups.badge"|trans }}){% endif %}
+                </option>
               {% endfor %}
             </select>
             <small class="form-text text-muted">

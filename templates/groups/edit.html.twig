@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+{% set menu = 'groups' %}
+
+{% block body %}
+
+{% include '_partials/back_button.html.twig' with { url: path('group_index'), text: "groups.back"|trans } %}
+
+<h1 class="display-4 fw-lighter">
+  {% if isNew %}{{ "groups.new"|trans }}{% else %}{{ "groups.edit"|trans({'what': group.displayName}) }}{% endif %}
+</h1>
+
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="mt-4" style="max-width: 32rem;">
+  <div class="mb-3">
+    <label for="displayName" class="form-label">{{ "groups.name"|trans }}</label>
+    <input type="text" class="form-control" id="displayName" name="displayName"
+           value="{{ group.displayName }}" required autocomplete="off">
+  </div>
+  <div class="mb-3">
+    <label for="slug" class="form-label">{{ "groups.slug"|trans }}</label>
+    <div class="input-group">
+      <span class="input-group-text">principals/group-</span>
+      <input type="text" class="form-control" id="slug" name="slug"
+             value="{{ slugHint }}"
+             {% if not isNew %}readonly{% else %}required pattern="[a-z0-9]+(?:-[a-z0-9]+)*"{% endif %}
+             autocomplete="off"
+             placeholder="equipo">
+    </div>
+    <div class="form-text">
+      {% if isNew %}
+        {{ "groups.slug.help"|trans }}
+      {% else %}
+        {{ "groups.slug.immutable"|trans }}
+      {% endif %}
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">{{ "save"|trans }}</button>
+</form>
+
+{% endblock %}

@@ -14,6 +14,9 @@
         <li class="nav-item{% if menu == "resources" %} active{% endif %}">
           <a class="nav-link" href="{{ path('user_index') }}">{{ "title.users_and_resources"|trans }}</a>
         </li>
+        <li class="nav-item{% if menu == "groups" %} active{% endif %}">
+          <a class="nav-link" href="{{ path('group_index') }}">{{ "title.groups"|trans }}</a>
+        </li>
       </ul>
       {% if app.user %}
       <ul class="navbar-nav">

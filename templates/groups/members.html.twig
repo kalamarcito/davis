@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+{% set menu = 'groups' %}
+
+{% block body %}
+
+{% include '_partials/back_button.html.twig' with { url: path('group_index'), text: "groups.back"|trans } %}
+
+<h1 class="display-4 fw-lighter d-flex justify-content-between">
+  {{ "groups.members_of"|trans({'what': group.displayName}) }}
+  {% if candidates|length > 0 %}
+    <a href="#" data-bs-toggle="modal" data-bs-target="#addGroupMemberModal" class="btn btn-sm btn-success mb-auto mt-auto">+ {{ "groups.member_add"|trans }}</a>
+  {% endif %}
+</h1>
+
+<p class="text-muted"><code>{{ group.uri }}</code></p>
+
+<div class="list-group mt-3">
+{% for member in group.delegees %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ member.displayName }}</strong>
+            {% if member.email %}<span class="text-muted"> &lsaquo;{{ member.email }}&rsaquo;</span>{% endif %}
+            <br><small><code>{{ member.uri }}</code></small>
+        </div>
+        <a href="{{ path('group_member_remove', {id: group.id, memberId: member.id}) }}"
+           class="btn btn-sm btn-outline-danger">{{ "groups.member_remove"|trans }}</a>
+    </div>
+{% else %}
+    <div class="list-group-item text-muted">{{ "groups.members_none"|trans }}</div>
+{% endfor %}
+</div>
+
+{% if candidates|length > 0 %}
+<div class="modal fade" id="addGroupMemberModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ "groups.member_add"|trans }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ "close"|trans }}"></button>
+      </div>
+      <div class="modal-body">
+        <label for="groupMemberSelect" class="form-label">{{ "groups.member_pick"|trans }}</label>
+        <select class="form-control" id="groupMemberSelect">
+          {% for principal in candidates %}
+            <option value="{{ principal.id }}">{{ principal.displayName }}{% if principal.email %} ({{ principal.email }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ "cancel"|trans }}</button>
+        <a href="#" id="groupMemberAddCta"
+           data-href="{{ path('group_member_add', {id: group.id}) }}"
+           class="btn btn-primary">{{ "add"|trans }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('groupMemberAddCta')?.addEventListener('click', function (e) {
+  e.preventDefault();
+  const id = document.getElementById('groupMemberSelect').value;
+  window.location = this.dataset.href + '?principalId=' + encodeURIComponent(id);
+});
+</script>
+{% endif %}
+
+{% endblock %}
