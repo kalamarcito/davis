@@ -2534,12 +2534,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kalamarcito/dav",
-                "reference": "6f0e2128048f6f6b40516cd8b829cca06b266adf"
+                "reference": "4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kalamarcito/dav/zipball/6f0e2128048f6f6b40516cd8b829cca06b266adf",
-                "reference": "6f0e2128048f6f6b40516cd8b829cca06b266adf",
+                "url": "https://api.github.com/repos/kalamarcito/dav/zipball/4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3",
+                "reference": "4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3",
                 "shasum": ""
             },
             "require": {
@@ -2561,10 +2561,10 @@
             },
             "require-dev": {
                 "ext-sqlite3": "*",
-                "friendsofphp/php-cs-fixer": "^2.19",
+                "friendsofphp/php-cs-fixer": "^3.95",
                 "monolog/monolog": "^2.9",
-                "phpstan/phpstan": "^1.11",
-                "phpstan/phpstan-phpunit": "^1.4",
+                "phpstan/phpstan": "^2.2",
+                "phpstan/phpstan-phpunit": "^2.0",
                 "phpunit/phpunit": "^9.6"
             },
             "suggest": {
@@ -2590,7 +2590,7 @@
             },
             "scripts": {
                 "phpstan": [
-                    "phpstan analyse lib tests"
+                    "phpstan analyse lib tests --memory-limit 256M"
                 ],
                 "cs-fixer": [
                     "php-cs-fixer fix"
@@ -2628,7 +2628,7 @@
                 "forum": "https://groups.google.com/group/sabredav-discuss",
                 "source": "https://github.com/fruux/sabre-dav"
             },
-            "time": "2026-07-18T09:25:44+00:00"
+            "time": "2026-07-18T10:20:41+00:00"
         },
         {
             "name": "sabre/event",

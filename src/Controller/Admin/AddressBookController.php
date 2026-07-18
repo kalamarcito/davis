@@ -289,6 +289,10 @@ class AddressBookController extends AbstractController
             $entityManager->persist($sharedInstance);
         }
 
+        // Bump ctag so CardDAV clients re-check privileges after permission changes.
+        $addressBook = $instance->getAddressBook();
+        $addressBook->setSynctoken((string) ((int) $addressBook->getSynctoken() + 1));
+
         $entityManager->flush();
         $this->addFlash('success', $trans->trans('addressbook.shared'));
 
@@ -331,7 +335,9 @@ class AddressBookController extends AbstractController
         }
 
         $entityManager = $doctrine->getManager();
+        $addressBook = $instance->getAddressBook();
         $entityManager->remove($instance);
+        $addressBook->setSynctoken((string) ((int) $addressBook->getSynctoken() + 1));
         $entityManager->flush();
 
         $this->addFlash('success', $trans->trans('addressbook.revoked'));

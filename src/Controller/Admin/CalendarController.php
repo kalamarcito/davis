@@ -270,6 +270,11 @@ class CalendarController extends AbstractController
             $entityManager->persist($sharedInstance);
         }
 
+        // Bump ctag/sync-token so CalDAV clients re-PROPFIND privileges/ACLs
+        // after a permission change (they often cache current-user-privilege-set).
+        $calendar = $instance->getCalendar();
+        $calendar->setSynctoken((string) ((int) $calendar->getSynctoken() + 1));
+
         $entityManager->flush();
         $this->addFlash('success', $trans->trans('calendar.shared'));
 
@@ -363,7 +368,11 @@ class CalendarController extends AbstractController
         }
 
         $entityManager = $doctrine->getManager();
+        $calendar = $instance->getCalendar();
         $entityManager->remove($instance);
+
+        // Notify clients that the collection changed (share removed).
+        $calendar->setSynctoken((string) ((int) $calendar->getSynctoken() + 1));
 
         $entityManager->flush();
         $this->addFlash('success', $trans->trans('calendar.revoked'));
