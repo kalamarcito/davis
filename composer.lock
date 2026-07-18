@@ -2534,12 +2534,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kalamarcito/dav",
-                "reference": "4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3"
+                "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kalamarcito/dav/zipball/4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3",
-                "reference": "4305ff7d3a45ac34121f4d13d9abcedfb99fdcf3",
+                "url": "https://api.github.com/repos/kalamarcito/dav/zipball/035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
+                "reference": "035e050b5ddfbc2340e2a40d27cb6efa2b1a6ef8",
                 "shasum": ""
             },
             "require": {
@@ -2628,7 +2628,7 @@
                 "forum": "https://groups.google.com/group/sabredav-discuss",
                 "source": "https://github.com/fruux/sabre-dav"
             },
-            "time": "2026-07-18T10:20:41+00:00"
+            "time": "2026-07-18T10:58:35+00:00"
         },
         {
             "name": "sabre/event",
